@@ -4,9 +4,17 @@ import { useMemo, useState } from 'react';
 
 type Food = {
   id: number; mm: string; jp: string; description: string; price: number;
-  category: string; image: string; spicy?: boolean; popular?: boolean; special?: boolean;
+  category: string; image: string; popular?: boolean; special?: boolean;
+  optionTitle: string;
+  options: { id: string; label: string; price: number }[];
+  defaultOption: string;
+  defaultSpice: string;
+  toppings: { id: string; label: string; price: number }[];
 };
-type CartItem = Food & { quantity: number; size: 'regular' | 'large'; egg: boolean };
+type CartItem = Food & {
+  quantity: number; selectedOption: string; selectedSpice: string;
+  selectedToppings: string[]; note: string; unitPrice: number;
+};
 
 const categories = [
   { id: 'popular', icon: '✦', jp: '人気', mm: 'လူကြိုက်များ' },
@@ -17,25 +25,50 @@ const categories = [
   { id: 'drink', icon: '◌', jp: 'ドリンク', mm: 'အအေး' },
 ];
 
+const spiceOptions = [
+  { id: 'none', label: 'မစပ် / 辛くない' },
+  { id: 'mild', label: 'အနည်းငယ်စပ် / ひかえめ' },
+  { id: 'normal', label: 'ပုံမှန်စပ် / 普通' },
+  { id: 'hot', label: 'အစပ် / 辛口' },
+];
+
 const foods: Food[] = [
-  { id: 1, mm: 'မုန့်ဟင်းခါး', jp: 'モヒンガー', price: 850, category: 'noodle', spicy: true, popular: true,
-    description: 'レモングラスが香る、魚だしの米麺スープ。ゆで卵とサクサクの天ぷらを添えて。',
-    image: 'https://hsaba.com/wp-content/uploads/2013/07/traditionalfishnoodlesoup-768x576.jpg' },
-  { id: 2, mm: 'လက်ဖက်သုပ်', jp: 'ラペットゥ', price: 750, category: 'salad', popular: true,
-    description: '発酵茶葉とナッツ、キャベツ、トマトを和えたミャンマー定番のサラダ。',
-    image: 'https://images.microcms-assets.io/assets/14d13bd618dc45c7b684223c0ca9d033/1d1c2773a4c54b0da34a8901713f6c08/Myanmar%20food%20Tomomi.N%20%281%29.jpg' },
-  { id: 3, mm: 'ကြက်သား ဆီပြန်', jp: 'チキンカレーセット', price: 1200, category: 'curry', spicy: true, special: true,
-    description: 'スパイスをじっくり引き出した濃厚カレー。ライスと日替わりスープ付き。',
-    image: 'https://n.sinaimg.cn/sinacn10009/105/w1000h705/20181217/5442-hqhtqsp1912158.jpg' },
-  { id: 4, mm: 'အုန်းနို့ခေါက်ဆွဲ', jp: 'オンノカウスェー', price: 900, category: 'noodle', popular: true,
-    description: 'ココナッツミルクのコクと鶏肉の旨みが広がるクリーミーな麺料理。',
-    image: 'https://yangondaytours.com/wp-content/uploads/2017/02/22-mohinga.jpg' },
-  { id: 5, mm: 'စမူဆာ', jp: 'サモサ 3個', price: 500, category: 'snack',
-    description: 'じゃがいもと豆をスパイシーに仕上げたサクサクのおやつ。',
-    image: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=1000&q=80' },
-  { id: 6, mm: 'လက်ဖက်ရည်', jp: 'ミャンマーミルクティー', price: 400, category: 'drink',
-    description: 'しっかり煮出した茶葉と練乳で作る、甘く濃厚なミルクティー。',
-    image: 'https://images.unsplash.com/photo-1571934811356-5cc061b6821f?auto=format&fit=crop&w=1000&q=80' },
+  { id: 1, mm: 'မုန့်ဟင်းခါး', jp: 'モヒンガー', price: 850, category: 'noodle', popular: true,
+    description: 'レモングラスが香る魚だしの米麺スープ。ミャンマーの国民的な朝ごはんです。',
+    image: 'https://hsaba.com/wp-content/uploads/2013/07/traditionalfishnoodlesoup-768x576.jpg',
+    optionTitle: 'အရွယ်အစားရွေးပါ / サイズを選択', defaultOption: 'regular', defaultSpice: 'mild',
+    options: [{ id:'regular',label:'ပုံမှန် / 普通',price:0 },{ id:'large',label:'အကြီး / 大盛り',price:200 }],
+    toppings: [{id:'egg',label:'ကြက်ဥ / ゆで卵',price:100},{id:'fritter',label:'အကြော် / 揚げ物',price:150},{id:'fishcake',label:'ငါးဖယ် / フィッシュケーキ',price:200},{id:'noodle',label:'ခေါက်ဆွဲအပို / 麺追加',price:150}] },
+  { id: 2, mm: 'ရှမ်းခေါက်ဆွဲ', jp: 'シャンヌードル', price: 900, category: 'noodle', popular: true,
+    description: '鶏肉とトマトの旨み、香ばしいナッツが調和するシャン州の人気麺料理。',
+    image: 'https://images.microcms-assets.io/assets/14d13bd618dc45c7b684223c0ca9d033/1d1c2773a4c54b0da34a8901713f6c08/Myanmar%20food%20Tomomi.N%20%281%29.jpg',
+    optionTitle: 'အမျိုးအစားရွေးပါ / 種類を選択', defaultOption: 'dry', defaultSpice: 'mild',
+    options: [{id:'dry',label:'အသုပ် / 汁なし',price:0},{id:'soup',label:'အရည် / スープ',price:0}],
+    toppings: [{id:'chicken',label:'ကြက်သားအပို / 鶏肉追加',price:200},{id:'peanut',label:'မြေပဲအပို / ピーナッツ追加',price:100},{id:'greens',label:'အစိမ်းရွက်အပို / 青菜追加',price:100},{id:'noodle',label:'ခေါက်ဆွဲအပို / 麺追加',price:150}] },
+  { id: 3, mm: 'တိုဖူးနွေး', jp: '温かいひよこ豆豆腐麺', price: 900, category: 'noodle', popular: true, special: true,
+    description: 'なめらかなひよこ豆豆腐を麺に絡めた、やさしく香ばしいシャンの郷土料理。',
+    image: 'https://n.sinaimg.cn/sinacn10009/105/w1000h705/20181217/5442-hqhtqsp1912158.jpg',
+    optionTitle: 'အရွယ်အစားရွေးပါ / サイズを選択', defaultOption: 'regular', defaultSpice: 'mild',
+    options: [{id:'regular',label:'ပုံမှန် / 普通',price:0},{id:'large',label:'အကြီး / 大盛り',price:200}],
+    toppings: [{id:'bread',label:'အီကြာကွေး / 揚げパン',price:150},{id:'chicken',label:'ကြက်သားအပို / 鶏肉追加',price:200},{id:'tofu',label:'တိုဖူးနွေးအပို / ひよこ豆豆腐追加',price:150},{id:'peanut',label:'မြေပဲအပို / ピーナッツ追加',price:100}] },
+  { id: 4, mm: 'အုန်းနို့ခေါက်ဆွဲ', jp: 'オンノカウスエ', price: 950, category: 'noodle', popular: true,
+    description: 'ココナッツミルクのコクと鶏肉の旨みが広がる、クリーミーな麺料理。',
+    image: 'https://yangondaytours.com/wp-content/uploads/2017/02/22-mohinga.jpg',
+    optionTitle: 'အရွယ်အစားရွေးပါ / サイズを選択', defaultOption: 'regular', defaultSpice: 'mild',
+    options: [{id:'regular',label:'ပုံမှန် / 普通',price:0},{id:'large',label:'အကြီး / 大盛り',price:200}],
+    toppings: [{id:'egg',label:'ကြက်ဥ / ゆで卵',price:100},{id:'chicken',label:'ကြက်သားအပို / 鶏肉追加',price:200},{id:'crispy',label:'အကြွပ်ခေါက်ဆွဲ / 揚げ麺追加',price:100},{id:'noodle',label:'ခေါက်ဆွဲအပို / 麺追加',price:150}] },
+  { id: 5, mm: 'ကြေးအိုး', jp: 'チェーオー', price: 950, category: 'noodle', popular: true,
+    description: '豚肉団子と野菜、米麺を楽しむ、澄んだスープのミャンマー定番麺。',
+    image: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=1000&q=80',
+    optionTitle: 'အမျိုးအစားရွေးပါ / 種類を選択', defaultOption: 'soup', defaultSpice: 'none',
+    options: [{id:'soup',label:'အရည် / スープ',price:0},{id:'oil',label:'ဆီချက် / 汁なし・油和え',price:0}],
+    toppings: [{id:'meatball',label:'ဝက်သားလုံးအပို / 豚肉団子追加',price:200},{id:'pork',label:'ဝက်သားအပို / 豚肉追加',price:200},{id:'quail',label:'ငုံးဥအပို / うずら卵追加',price:100},{id:'greens',label:'အစိမ်းရွက်အပို / 青菜追加',price:100},{id:'noodle',label:'ကြာဆံအပို / 麺追加',price:150}] },
+  { id: 6, mm: 'နန်းကြီးသုပ်', jp: 'ナンジートゥ', price: 900, category: 'noodle', popular: true,
+    description: '太い米麺に鶏肉とひよこ豆粉を絡めた、コクのある和え麺。',
+    image: 'https://images.unsplash.com/photo-1571934811356-5cc061b6821f?auto=format&fit=crop&w=1000&q=80',
+    optionTitle: 'အရွယ်အစားရွေးပါ / サイズを選択', defaultOption: 'regular', defaultSpice: 'mild',
+    options: [{id:'regular',label:'ပုံမှန် / 普通',price:0},{id:'large',label:'အကြီး / 大盛り',price:200}],
+    toppings: [{id:'egg',label:'ကြက်ဥ / ゆで卵',price:100},{id:'chicken',label:'ကြက်သားအပို / 鶏肉追加',price:200},{id:'onion',label:'ကြက်သွန်ကြော် / フライドオニオン',price:100},{id:'noodle',label:'ခေါက်ဆွဲအပို / 麺追加',price:150}] },
 ];
 
 const yen = (value: number) => '¥' + value.toLocaleString('ja-JP');
@@ -51,8 +84,10 @@ export default function Home() {
   const [method, setMethod] = useState<'delivery' | 'pickup'>('delivery');
   const [selected, setSelected] = useState<Food | null>(null);
   const [detailQty, setDetailQty] = useState(1);
-  const [detailSize, setDetailSize] = useState<'regular' | 'large'>('regular');
-  const [detailEgg, setDetailEgg] = useState(false);
+  const [detailOption, setDetailOption] = useState<string | null>(null);
+  const [detailSpice, setDetailSpice] = useState<string | null>(null);
+  const [detailToppings, setDetailToppings] = useState<string[]>([]);
+  const [detailNote, setDetailNote] = useState('');
   const [cart, setCart] = useState<CartItem[]>([]);
   const [showCart, setShowCart] = useState(false);
   const [checkout, setCheckout] = useState(false);
@@ -67,21 +102,35 @@ export default function Home() {
     return foods.filter((food) => (food.jp + ' ' + food.mm).toLowerCase().includes(q));
   }, [category, query]);
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
-  const subtotal = cart.reduce((sum, item) => sum + (item.price + (item.size === 'large' ? 200 : 0) + (item.egg ? 100 : 0)) * item.quantity, 0);
+  const subtotal = cart.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
   const fee = method === 'delivery' && cart.length ? 300 : 0;
+  const detailUnitPrice = selected ? selected.price
+    + (selected.options.find((option) => option.id === detailOption)?.price || 0)
+    + selected.toppings.filter((topping) => detailToppings.includes(topping.id)).reduce((sum, topping) => sum + topping.price, 0)
+    : 0;
+  const requiredComplete = Boolean(detailOption && detailSpice);
 
   const flash = (message: string) => {
     setToast(message);
     window.setTimeout(() => setToast(''), 2200);
   };
   const openFood = (food: Food) => {
-    setSelected(food); setDetailQty(1); setDetailSize('regular'); setDetailEgg(false);
+    setSelected(food);
+    setDetailQty(1);
+    setDetailOption(food.defaultOption || null);
+    setDetailSpice(food.defaultSpice || null);
+    setDetailToppings([]);
+    setDetailNote('');
   };
   const addSelected = () => {
-    if (!selected) return;
+    if (!selected || !detailOption || !detailSpice) return;
+    const optionPrice = selected.options.find((option) => option.id === detailOption)?.price || 0;
+    const toppingPrice = selected.toppings.filter((topping) => detailToppings.includes(topping.id)).reduce((sum, topping) => sum + topping.price, 0);
+    const unitPrice = selected.price + optionPrice + toppingPrice;
     setCart((items) => {
-      const found = items.findIndex((item) => item.id === selected.id && item.size === detailSize && item.egg === detailEgg);
-      if (found < 0) return items.concat([{ ...selected, quantity: detailQty, size: detailSize, egg: detailEgg }]);
+      const toppingKey = detailToppings.slice().sort().join(',');
+      const found = items.findIndex((item) => item.id === selected.id && item.selectedOption === detailOption && item.selectedSpice === detailSpice && item.selectedToppings.slice().sort().join(',') === toppingKey && item.note === detailNote);
+      if (found < 0) return items.concat([{ ...selected, quantity: detailQty, selectedOption: detailOption, selectedSpice: detailSpice, selectedToppings: detailToppings, note: detailNote, unitPrice }]);
       return items.map((item, index) => index === found ? { ...item, quantity: item.quantity + detailQty } : item);
     });
     setSelected(null);
@@ -171,7 +220,7 @@ export default function Home() {
           {filteredFoods.map((food) => <article className='food-card' key={food.id}>
             <button className={'heart ' + (favorites.includes(food.id) ? 'liked' : '')} aria-label='Favorite' onClick={() => setFavorites((list) => list.includes(food.id) ? list.filter((id) => id !== food.id) : list.concat(food.id))}>♥</button>
             <button className='food-image' onClick={() => openFood(food)}><img src={food.image} alt={food.jp}/>{food.special && <span className='special-badge'>TODAY&apos;S SPECIAL</span>}</button>
-            <div className='food-info'><div className='food-title'><div><small>{food.mm}</small><h3>{food.jp}</h3></div>{food.spicy && <span className='spicy'>● 辛</span>}</div><p>{food.description}</p><div className='food-bottom'><strong>{yen(food.price)}</strong><button onClick={() => openFood(food)}>＋ 選ぶ</button></div></div>
+            <div className='food-info'><div className='food-title'><div><small>{food.mm}</small><h3>{food.jp}</h3></div><span className='spicy'>辛さ選択</span></div><p>{food.description}</p><div className='food-bottom'><strong>{yen(food.price)}</strong><button onClick={() => openFood(food)}>＋ 選ぶ</button></div></div>
           </article>)}
         </div> : <div className='empty-state'><span>⌕</span><h3>料理が見つかりません</h3><button onClick={() => setQuery('')}>検索をクリア</button></div>}
       </section>
@@ -191,19 +240,62 @@ export default function Home() {
         <div className='detail-drawer'>
           <button className='modal-close' onClick={() => setSelected(null)}>×</button>
           <div className='detail-photo'><img src={selected.image} alt={selected.jp}/><span>{selected.category.toUpperCase()}</span></div>
-          <div className='detail-content'><p className='eyebrow'>SIGNATURE DISH</p><small className='mm-name'>{selected.mm}</small><h2>{selected.jp}</h2><p className='detail-desc'>{selected.description}</p>
-            <div className='allergens'><b>アレルギー</b><span>Egg</span><span>Fish</span><span>Peanuts</span></div>
-            <div className='option-group'><div><strong>サイズ</strong><small>အရွယ်အစား</small></div><div className='pills'><button className={detailSize === 'regular' ? 'active' : ''} onClick={() => setDetailSize('regular')}>Regular</button><button className={detailSize === 'large' ? 'active' : ''} onClick={() => setDetailSize('large')}>Large <small>+¥200</small></button></div></div>
-            {selected.spicy && <div className='option-group'><div><strong>辛さ</strong><small>အစပ်အဟပ်</small></div><div className='pills'><button>控えめ</button><button className='active'>中辛</button><button>辛口</button></div></div>}
-            <label className='check-option'><input type='checkbox' checked={detailEgg} onChange={(event) => setDetailEgg(event.target.checked)}/><span className='checkbox'/><div><b>ゆで卵を追加</b><small>ကြက်ဥ ထပ်ထည့်ရန်</small></div><strong>+¥100</strong></label>
-            <div className='add-row'><div className='quantity'><button onClick={() => setDetailQty(Math.max(1, detailQty - 1))}>−</button><b>{detailQty}</b><button onClick={() => setDetailQty(detailQty + 1)}>+</button></div><button className='primary add-cart' onClick={addSelected}><span>{yen((selected.price + (detailSize === 'large' ? 200 : 0) + (detailEgg ? 100 : 0)) * detailQty)}</span>カートに追加</button></div>
+          <div className='detail-content'>
+            <p className='eyebrow'>FOOD DETAIL</p>
+            <small className='mm-name'>{selected.mm}</small>
+            <h2>{selected.jp}</h2>
+            <strong className='detail-base-price'>{yen(selected.price)}</strong>
+            <p className='detail-desc'>{selected.description}</p>
+
+            <div className='detail-option-block'>
+              <div className='detail-option-title'><strong>{selected.optionTitle}</strong><span>（必須）</span></div>
+              <div className='choice-list'>
+                {selected.options.map((option) => <label className={detailOption === option.id ? 'selected' : ''} key={option.id}>
+                  <input type='radio' name='food-option' checked={detailOption === option.id} onChange={() => setDetailOption(option.id)}/>
+                  <span className='radio-mark'/><b>{option.label}</b>{option.price > 0 && <strong>+{yen(option.price)}</strong>}
+                </label>)}
+              </div>
+              {selected.id === 5 && detailOption === 'oil' && <div className='soup-note'><b>ဟင်းရည်သီးခြားပါဝင်သည်</b><span>スープ付き</span></div>}
+            </div>
+
+            <div className='detail-option-block'>
+              <div className='detail-option-title'><strong>အစပ်အဆင့်ရွေးပါ / 辛さを選択</strong><span>（必須）</span></div>
+              <div className='choice-list spice-list'>
+                {spiceOptions.map((spice) => <label className={detailSpice === spice.id ? 'selected' : ''} key={spice.id}>
+                  <input type='radio' name='spice-option' checked={detailSpice === spice.id} onChange={() => setDetailSpice(spice.id)}/>
+                  <span className='radio-mark'/><b>{spice.label}</b>
+                </label>)}
+              </div>
+            </div>
+
+            <div className='detail-option-block'>
+              <div className='detail-option-title'><strong>Topping ထပ်ထည့်ရန်</strong><span>（任意）</span></div>
+              <div className='choice-list topping-list'>
+                {selected.toppings.map((topping) => <label className={detailToppings.includes(topping.id) ? 'selected' : ''} key={topping.id}>
+                  <input type='checkbox' checked={detailToppings.includes(topping.id)} onChange={() => setDetailToppings((list) => list.includes(topping.id) ? list.filter((id) => id !== topping.id) : list.concat(topping.id))}/>
+                  <span className='check-mark'/><b>{topping.label}</b><strong>+{yen(topping.price)}</strong>
+                </label>)}
+              </div>
+            </div>
+
+            <label className='request-note'>
+              <span><b>အထူးတောင်းဆိုချက်</b>（任意）</span>
+              <small>ご要望・備考</small>
+              <textarea value={detailNote} onChange={(event) => setDetailNote(event.target.value)} placeholder={'例：ကြက်သွန်နီမထည့်ပါနှင့်\n例：玉ねぎ抜き'}/>
+            </label>
+
+            <div className='detail-actions'>
+              <div><span>အရေအတွက် / 数量</span><div className='quantity'><button onClick={() => setDetailQty(Math.max(1, detailQty - 1))}>−</button><b>{detailQty}</b><button onClick={() => setDetailQty(detailQty + 1)}>+</button></div></div>
+              <button className='primary add-cart' disabled={!requiredComplete} onClick={addSelected}><span>{yen(detailUnitPrice * detailQty)}</span>カートに追加</button>
+            </div>
+            {!requiredComplete && <p className='required-warning'>必須項目を選択してください / မဖြစ်မနေ ရွေးချယ်ရန်</p>}
           </div>
         </div>
       </div>}
 
       {showCart && <div className='modal-layer right' onMouseDown={(event) => event.currentTarget === event.target && setShowCart(false)}><aside className='cart-drawer'>
         <div className='drawer-head'><div><p className='eyebrow'>YOUR ORDER</p><h2>カート <span>{cartCount}点</span></h2></div><button className='modal-close static' onClick={() => setShowCart(false)}>×</button></div>
-        {cart.length ? <><div className='cart-list'>{cart.map((item, index) => <div className='cart-item' key={item.id + '-' + index}><img src={item.image} alt=''/><div><strong>{item.jp}</strong><small>{item.mm} · {item.size}{item.egg ? ' · Egg' : ''}</small><div className='mini-quantity'><button onClick={() => setCart((items) => items.map((entry, i) => i === index ? { ...entry, quantity: Math.max(1, entry.quantity - 1) } : entry))}>−</button><span>{item.quantity}</span><button onClick={() => setCart((items) => items.map((entry, i) => i === index ? { ...entry, quantity: entry.quantity + 1 } : entry))}>+</button></div></div><div className='cart-price'><button onClick={() => setCart((items) => items.filter((_, i) => i !== index))}>×</button><strong>{yen((item.price + (item.size === 'large' ? 200 : 0) + (item.egg ? 100 : 0)) * item.quantity)}</strong></div></div>)}</div>
+        {cart.length ? <><div className='cart-list'>{cart.map((item, index) => <div className='cart-item' key={item.id + '-' + index}><img src={item.image} alt=''/><div><strong>{item.mm} / {item.jp}</strong><small>{item.options.find((option) => option.id === item.selectedOption)?.label} · {spiceOptions.find((spice) => spice.id === item.selectedSpice)?.label}</small>{item.selectedToppings.length > 0 && <small>+ {item.toppings.filter((topping) => item.selectedToppings.includes(topping.id)).map((topping) => topping.label).join('、')}</small>}{item.note && <small className='cart-note'>備考: {item.note}</small>}<div className='mini-quantity'><button onClick={() => setCart((items) => items.map((entry, i) => i === index ? { ...entry, quantity: Math.max(1, entry.quantity - 1) } : entry))}>−</button><span>{item.quantity}</span><button onClick={() => setCart((items) => items.map((entry, i) => i === index ? { ...entry, quantity: entry.quantity + 1 } : entry))}>+</button></div></div><div className='cart-price'><button onClick={() => setCart((items) => items.filter((_, i) => i !== index))}>×</button><strong>{yen(item.unitPrice * item.quantity)}</strong></div></div>)}</div>
           <label className='coupon'><span>◇</span><input placeholder='クーポンコード'/><button>適用</button></label><textarea className='notes' placeholder='お店へのメモ（任意）'/>
           <div className='summary'><p><span>小計</span><b>{yen(subtotal)}</b></p><p><span>配送料</span><b>{fee ? yen(fee) : '無料'}</b></p><div><span>合計 <small>（税込）</small></span><strong>{yen(subtotal + fee)}</strong></div></div>
           <button className='primary wide checkout-button' onClick={() => { setShowCart(false); setCheckout(true); }}>レジに進む <span>→</span></button></> :

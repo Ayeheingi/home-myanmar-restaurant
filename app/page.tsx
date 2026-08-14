@@ -1,0 +1,226 @@
+'use client';
+
+import { useMemo, useState } from 'react';
+
+type Food = {
+  id: number; mm: string; jp: string; description: string; price: number;
+  category: string; image: string; spicy?: boolean; popular?: boolean; special?: boolean;
+};
+type CartItem = Food & { quantity: number; size: 'regular' | 'large'; egg: boolean };
+
+const categories = [
+  { id: 'popular', icon: '✦', jp: '人気', mm: 'လူကြိုက်များ' },
+  { id: 'curry', icon: '◒', jp: 'ご飯・カレー', mm: 'ထမင်း ဟင်း' },
+  { id: 'noodle', icon: '≋', jp: '麺料理', mm: 'ခေါက်ဆွဲ' },
+  { id: 'salad', icon: '✾', jp: 'サラダ', mm: 'အသုပ်' },
+  { id: 'snack', icon: '◇', jp: 'スナック', mm: 'အဆာပြေ' },
+  { id: 'drink', icon: '◌', jp: 'ドリンク', mm: 'အအေး' },
+];
+
+const foods: Food[] = [
+  { id: 1, mm: 'မုန့်ဟင်းခါး', jp: 'モヒンガー', price: 850, category: 'noodle', spicy: true, popular: true,
+    description: 'レモングラスが香る、魚だしの米麺スープ。ゆで卵とサクサクの天ぷらを添えて。',
+    image: 'https://hsaba.com/wp-content/uploads/2013/07/traditionalfishnoodlesoup-768x576.jpg' },
+  { id: 2, mm: 'လက်ဖက်သုပ်', jp: 'ラペットゥ', price: 750, category: 'salad', popular: true,
+    description: '発酵茶葉とナッツ、キャベツ、トマトを和えたミャンマー定番のサラダ。',
+    image: 'https://images.microcms-assets.io/assets/14d13bd618dc45c7b684223c0ca9d033/1d1c2773a4c54b0da34a8901713f6c08/Myanmar%20food%20Tomomi.N%20%281%29.jpg' },
+  { id: 3, mm: 'ကြက်သား ဆီပြန်', jp: 'チキンカレーセット', price: 1200, category: 'curry', spicy: true, special: true,
+    description: 'スパイスをじっくり引き出した濃厚カレー。ライスと日替わりスープ付き。',
+    image: 'https://n.sinaimg.cn/sinacn10009/105/w1000h705/20181217/5442-hqhtqsp1912158.jpg' },
+  { id: 4, mm: 'အုန်းနို့ခေါက်ဆွဲ', jp: 'オンノカウスェー', price: 900, category: 'noodle', popular: true,
+    description: 'ココナッツミルクのコクと鶏肉の旨みが広がるクリーミーな麺料理。',
+    image: 'https://yangondaytours.com/wp-content/uploads/2017/02/22-mohinga.jpg' },
+  { id: 5, mm: 'စမူဆာ', jp: 'サモサ 3個', price: 500, category: 'snack',
+    description: 'じゃがいもと豆をスパイシーに仕上げたサクサクのおやつ。',
+    image: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=1000&q=80' },
+  { id: 6, mm: 'လက်ဖက်ရည်', jp: 'ミャンマーミルクティー', price: 400, category: 'drink',
+    description: 'しっかり煮出した茶葉と練乳で作る、甘く濃厚なミルクティー。',
+    image: 'https://images.unsplash.com/photo-1571934811356-5cc061b6821f?auto=format&fit=crop&w=1000&q=80' },
+];
+
+const yen = (value: number) => '¥' + value.toLocaleString('ja-JP');
+
+export default function Home() {
+  const [started, setStarted] = useState(false);
+  const [signup, setSignup] = useState(false);
+  const [loggedIn, setLoggedIn] = useState(false);
+  const [language, setLanguage] = useState<'jp' | 'mm'>('jp');
+  const [activeTab, setActiveTab] = useState('home');
+  const [category, setCategory] = useState('popular');
+  const [query, setQuery] = useState('');
+  const [method, setMethod] = useState<'delivery' | 'pickup'>('delivery');
+  const [selected, setSelected] = useState<Food | null>(null);
+  const [detailQty, setDetailQty] = useState(1);
+  const [detailSize, setDetailSize] = useState<'regular' | 'large'>('regular');
+  const [detailEgg, setDetailEgg] = useState(false);
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [showCart, setShowCart] = useState(false);
+  const [checkout, setCheckout] = useState(false);
+  const [tracking, setTracking] = useState(false);
+  const [favorites, setFavorites] = useState<number[]>([2]);
+  const [toast, setToast] = useState('');
+
+  const filteredFoods = useMemo(() => {
+    const list = category === 'popular' ? foods.filter((food) => food.popular) : foods.filter((food) => food.category === category);
+    if (!query.trim()) return list;
+    const q = query.toLowerCase();
+    return foods.filter((food) => (food.jp + ' ' + food.mm).toLowerCase().includes(q));
+  }, [category, query]);
+  const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const subtotal = cart.reduce((sum, item) => sum + (item.price + (item.size === 'large' ? 200 : 0) + (item.egg ? 100 : 0)) * item.quantity, 0);
+  const fee = method === 'delivery' && cart.length ? 300 : 0;
+
+  const flash = (message: string) => {
+    setToast(message);
+    window.setTimeout(() => setToast(''), 2200);
+  };
+  const openFood = (food: Food) => {
+    setSelected(food); setDetailQty(1); setDetailSize('regular'); setDetailEgg(false);
+  };
+  const addSelected = () => {
+    if (!selected) return;
+    setCart((items) => {
+      const found = items.findIndex((item) => item.id === selected.id && item.size === detailSize && item.egg === detailEgg);
+      if (found < 0) return items.concat([{ ...selected, quantity: detailQty, size: detailSize, egg: detailEgg }]);
+      return items.map((item, index) => index === found ? { ...item, quantity: item.quantity + detailQty } : item);
+    });
+    setSelected(null);
+    flash(language === 'jp' ? 'カートに追加しました' : 'ခြင်းထဲသို့ ထည့်ပြီးပါပြီ');
+  };
+  const goTab = (tab: string) => {
+    setActiveTab(tab);
+    if (tab === 'cart') setShowCart(true);
+    if (tab === 'orders') setTracking(true);
+    if (tab === 'menu') document.getElementById('menu')?.scrollIntoView();
+  };
+
+  return (
+    <main className='app-shell'>
+      {!started && (
+        <div className='welcome-overlay'>
+          <div className='welcome-visual'>
+            <div className='welcome-mark'><span>Ⴙ</span></div>
+            <p className='eyebrow light'>TOKYO · MYANMAR KITCHEN</p>
+            <h1>やさしい食卓へ、<br/><em>ミャンマーの香りを。</em></h1>
+            <p>毎日丁寧に仕込む、故郷の味。<br/>အိမ်လွမ်းပြေ မြန်မာ့အရသာ။</p>
+            <div className='welcome-chips'><span>30–45 min</span><span>4.9 ★</span><span>¥1,200〜</span></div>
+          </div>
+          <div className='auth-card'>
+            <button className='close-welcome' onClick={() => setStarted(true)} aria-label='Close'>×</button>
+            <div className='brand compact'><span>Ⴙ</span><div><strong>THAZIN</strong><small>Myanmar Kitchen</small></div></div>
+            <p className='eyebrow'>{signup ? 'JOIN OUR TABLE' : 'WELCOME BACK'}</p>
+            <h2>{signup ? '新規登録' : 'おかえりなさい'}</h2>
+            <p className='auth-mm'>{signup ? 'အကောင့်အသစ်ဖွင့်ရန်' : 'ပြန်လည်ကြိုဆိုပါတယ်'}</p>
+            {signup && <label><span>お名前 / အမည်</span><input placeholder='Aye Thandar'/></label>}
+            <label><span>メールアドレス</span><input type='email' placeholder='example@gmail.com'/></label>
+            {signup && <label><span>電話番号</span><input placeholder='+81 90-1234-5678'/></label>}
+            <label><span>パスワード</span><input type='password' placeholder='••••••••'/></label>
+            {!signup && <button className='text-link'>パスワードを忘れた方</button>}
+            <button className='primary wide' onClick={() => { setLoggedIn(true); setStarted(true); flash('ログインしました'); }}>
+              {signup ? 'アカウントを作成 / Sign Up' : 'ログイン / Login'}
+            </button>
+            <div className='or'><span/>OR<span/></div>
+            <button className='secondary wide' onClick={() => setStarted(true)}>ゲストとして続ける</button>
+            <p className='auth-switch'>{signup ? 'アカウントをお持ちの方' : 'アカウントをお持ちでない方'} <button onClick={() => setSignup(!signup)}>{signup ? 'ログイン' : '新規登録'}</button></p>
+          </div>
+        </div>
+      )}
+
+      <header className='topbar'>
+        <button className='brand' onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}><span>Ⴙ</span><div><strong>THAZIN</strong><small>Myanmar Kitchen</small></div></button>
+        <div className='header-location'><span className='pin'>●</span><div><small>お届け先</small><strong>東京都 新宿区 西新宿 2-8</strong></div><span>⌄</span></div>
+        <div className='header-actions'>
+          <button className='language' onClick={() => setLanguage(language === 'jp' ? 'mm' : 'jp')}><span>{language === 'jp' ? 'JP' : 'MM'}</span>{language === 'jp' ? '日本語' : 'မြန်မာ'}</button>
+          <button className='round' aria-label='Notifications'>♢<span className='alert-dot'/></button>
+          <button className='profile' onClick={() => goTab('mypage')}><span>{loggedIn ? 'AT' : '?'}</span><div><small>{loggedIn ? 'Aye Thandar' : 'Guest'}</small><strong>{loggedIn ? 'マイページ' : 'ログイン'}</strong></div></button>
+        </div>
+      </header>
+
+      <section className='hero'>
+        <div className='hero-copy'>
+          <p className='eyebrow'>AUTHENTIC MYANMAR FLAVORS</p>
+          <h1>{language === 'jp' ? <>今日は、何を<br/><em>食べますか？</em></> : <>ဒီနေ့ ဘာစား<br/><em>ချင်ပါသလဲ?</em></>}</h1>
+          <p>{language === 'jp' ? '故郷の味を、東京のあなたの食卓へ。' : 'မြန်မာ့အရသာကို တိုကျိုမြို့က သင့်အိမ်အရောက်။'}</p>
+          <div className='search-box'><span>⌕</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={language === 'jp' ? '料理名を検索…' : 'အစားအစာရှာရန်…'}/><button>検索</button></div>
+        </div>
+        <div className='hero-image'>
+          <img src={foods[0].image} alt='Mohinga, traditional Myanmar noodle soup'/>
+          <div className='hero-badge'><b>4.9</b><span>★ ★ ★ ★ ★<br/><small>1,240 reviews</small></span></div>
+          <div className='hero-caption'><small>TODAY&apos;S PICK</small><strong>မုန့်ဟင်းခါး</strong><span>モヒンガー</span></div>
+        </div>
+      </section>
+
+      <section className='control-strip'>
+        <div className='method-switch'>
+          <button className={method === 'delivery' ? 'active' : ''} onClick={() => setMethod('delivery')}><span>◈</span><div><b>Delivery</b><small>30–45 min</small></div></button>
+          <button className={method === 'pickup' ? 'active' : ''} onClick={() => setMethod('pickup')}><span>▣</span><div><b>Pickup</b><small>15–20 min</small></div></button>
+        </div>
+        <p><span>●</span> ただいま注文受付中 <small>・ ¥2,000以上で配送料無料</small></p>
+      </section>
+
+      <section className='content-section' id='menu'>
+        <div className='section-heading'><div><p className='eyebrow'>EXPLORE OUR MENU</p><h2>{language === 'jp' ? 'カテゴリー' : 'အမျိုးအစားများ'}</h2></div><button className='view-all' onClick={() => setCategory('popular')}>すべて見る <span>→</span></button></div>
+        <div className='categories'>
+          {categories.map((item) => <button key={item.id} onClick={() => setCategory(item.id)} className={category === item.id ? 'active' : ''}><span>{item.icon}</span><strong>{item.jp}</strong><small>{item.mm}</small></button>)}
+        </div>
+      </section>
+
+      <section className='content-section menu-section'>
+        <div className='section-heading'><div><p className='eyebrow'>CHEF&apos;S SELECTION</p><h2>{categories.find((item) => item.id === category)?.jp}</h2></div><div className='filters'><button className='active'>おすすめ順</button><button onClick={() => flash('辛さ・価格・アレルギーで絞り込み')}>⚙ 絞り込み</button></div></div>
+        {filteredFoods.length ? <div className='food-grid'>
+          {filteredFoods.map((food) => <article className='food-card' key={food.id}>
+            <button className={'heart ' + (favorites.includes(food.id) ? 'liked' : '')} aria-label='Favorite' onClick={() => setFavorites((list) => list.includes(food.id) ? list.filter((id) => id !== food.id) : list.concat(food.id))}>♥</button>
+            <button className='food-image' onClick={() => openFood(food)}><img src={food.image} alt={food.jp}/>{food.special && <span className='special-badge'>TODAY&apos;S SPECIAL</span>}</button>
+            <div className='food-info'><div className='food-title'><div><small>{food.mm}</small><h3>{food.jp}</h3></div>{food.spicy && <span className='spicy'>● 辛</span>}</div><p>{food.description}</p><div className='food-bottom'><strong>{yen(food.price)}</strong><button onClick={() => openFood(food)}>＋ 選ぶ</button></div></div>
+          </article>)}
+        </div> : <div className='empty-state'><span>⌕</span><h3>料理が見つかりません</h3><button onClick={() => setQuery('')}>検索をクリア</button></div>}
+      </section>
+
+      <section className='promo-banner'>
+        <div><p className='eyebrow light'>WEEKEND SPECIAL</p><h2>家族の食卓に、<br/>もっとミャンマーを。</h2><p>カレー2品・ライス・サラダ・ドリンクのお得なセット</p><button onClick={() => openFood(foods[2])}>セットを見る →</button></div>
+        <div className='promo-price'><small>FAMILY SET</small><strong>¥3,800</strong><span>通常 ¥4,600</span></div>
+      </section>
+
+      <footer><div className='brand inverted'><span>Ⴙ</span><div><strong>THAZIN</strong><small>Myanmar Kitchen</small></div></div><p>東京で楽しむ、本格ミャンマー料理。</p><div><span>営業時間 11:00–22:00</span><span>¥ Japanese Yen</span></div></footer>
+
+      <nav className='bottom-nav' aria-label='Main navigation'>
+        {[['home','⌂','ホーム'],['menu','≡','メニュー'],['cart','◇','カート'],['orders','◴','注文'],['mypage','○','マイページ']].map((item) => <button key={item[0]} className={activeTab === item[0] ? 'active' : ''} onClick={() => goTab(item[0])}><span>{item[1]}{item[0] === 'cart' && cartCount > 0 && <b>{cartCount}</b>}</span><small>{item[2]}</small></button>)}
+      </nav>
+
+      {selected && <div className='modal-layer' onMouseDown={(event) => event.currentTarget === event.target && setSelected(null)}>
+        <div className='detail-drawer'>
+          <button className='modal-close' onClick={() => setSelected(null)}>×</button>
+          <div className='detail-photo'><img src={selected.image} alt={selected.jp}/><span>{selected.category.toUpperCase()}</span></div>
+          <div className='detail-content'><p className='eyebrow'>SIGNATURE DISH</p><small className='mm-name'>{selected.mm}</small><h2>{selected.jp}</h2><p className='detail-desc'>{selected.description}</p>
+            <div className='allergens'><b>アレルギー</b><span>Egg</span><span>Fish</span><span>Peanuts</span></div>
+            <div className='option-group'><div><strong>サイズ</strong><small>အရွယ်အစား</small></div><div className='pills'><button className={detailSize === 'regular' ? 'active' : ''} onClick={() => setDetailSize('regular')}>Regular</button><button className={detailSize === 'large' ? 'active' : ''} onClick={() => setDetailSize('large')}>Large <small>+¥200</small></button></div></div>
+            {selected.spicy && <div className='option-group'><div><strong>辛さ</strong><small>အစပ်အဟပ်</small></div><div className='pills'><button>控えめ</button><button className='active'>中辛</button><button>辛口</button></div></div>}
+            <label className='check-option'><input type='checkbox' checked={detailEgg} onChange={(event) => setDetailEgg(event.target.checked)}/><span className='checkbox'/><div><b>ゆで卵を追加</b><small>ကြက်ဥ ထပ်ထည့်ရန်</small></div><strong>+¥100</strong></label>
+            <div className='add-row'><div className='quantity'><button onClick={() => setDetailQty(Math.max(1, detailQty - 1))}>−</button><b>{detailQty}</b><button onClick={() => setDetailQty(detailQty + 1)}>+</button></div><button className='primary add-cart' onClick={addSelected}><span>{yen((selected.price + (detailSize === 'large' ? 200 : 0) + (detailEgg ? 100 : 0)) * detailQty)}</span>カートに追加</button></div>
+          </div>
+        </div>
+      </div>}
+
+      {showCart && <div className='modal-layer right' onMouseDown={(event) => event.currentTarget === event.target && setShowCart(false)}><aside className='cart-drawer'>
+        <div className='drawer-head'><div><p className='eyebrow'>YOUR ORDER</p><h2>カート <span>{cartCount}点</span></h2></div><button className='modal-close static' onClick={() => setShowCart(false)}>×</button></div>
+        {cart.length ? <><div className='cart-list'>{cart.map((item, index) => <div className='cart-item' key={item.id + '-' + index}><img src={item.image} alt=''/><div><strong>{item.jp}</strong><small>{item.mm} · {item.size}{item.egg ? ' · Egg' : ''}</small><div className='mini-quantity'><button onClick={() => setCart((items) => items.map((entry, i) => i === index ? { ...entry, quantity: Math.max(1, entry.quantity - 1) } : entry))}>−</button><span>{item.quantity}</span><button onClick={() => setCart((items) => items.map((entry, i) => i === index ? { ...entry, quantity: entry.quantity + 1 } : entry))}>+</button></div></div><div className='cart-price'><button onClick={() => setCart((items) => items.filter((_, i) => i !== index))}>×</button><strong>{yen((item.price + (item.size === 'large' ? 200 : 0) + (item.egg ? 100 : 0)) * item.quantity)}</strong></div></div>)}</div>
+          <label className='coupon'><span>◇</span><input placeholder='クーポンコード'/><button>適用</button></label><textarea className='notes' placeholder='お店へのメモ（任意）'/>
+          <div className='summary'><p><span>小計</span><b>{yen(subtotal)}</b></p><p><span>配送料</span><b>{fee ? yen(fee) : '無料'}</b></p><div><span>合計 <small>（税込）</small></span><strong>{yen(subtotal + fee)}</strong></div></div>
+          <button className='primary wide checkout-button' onClick={() => { setShowCart(false); setCheckout(true); }}>レジに進む <span>→</span></button></> :
+          <div className='cart-empty'><span>◇</span><h3>カートは空です</h3><p>お好きな料理を選んでください。</p><button className='primary' onClick={() => setShowCart(false)}>メニューを見る</button></div>}
+      </aside></div>}
+
+      {checkout && <div className='modal-layer'><div className='checkout-modal'><button className='modal-close' onClick={() => setCheckout(false)}>×</button>
+        <div className='checkout-title'><p className='eyebrow'>CHECKOUT</p><h2>お届け情報</h2><p>အော်ဒါအချက်အလက်များ</p></div>
+        <div className='checkout-grid'><div><h3>1. 受け取り方法</h3><div className='method-switch checkout-method'><button className={method === 'delivery' ? 'active' : ''} onClick={() => setMethod('delivery')}><span>◈</span><div><b>Delivery</b><small>ご指定の住所へ</small></div></button><button className={method === 'pickup' ? 'active' : ''} onClick={() => setMethod('pickup')}><span>▣</span><div><b>Pickup</b><small>お店で受け取り</small></div></button></div>
+          <h3>2. お客様情報</h3><div className='form-grid'><label><span>お名前</span><input defaultValue={loggedIn ? 'Aye Thandar' : ''} placeholder='例）アイ・タンダー'/></label><label><span>電話番号</span><input placeholder='090-1234-5678'/></label>{method === 'delivery' && <><label><span>郵便番号</span><input placeholder='160-0023'/></label><label className='full'><span>配達先住所</span><input placeholder='東京都新宿区西新宿 2-8-1'/></label></>}</div>
+        </div><div className='payment-side'><h3>3. お支払い</h3>{['Credit Card','PayPay',method === 'delivery' ? 'Cash on delivery' : 'Pay at restaurant'].map((pay, i) => <label className={'payment ' + (i === 0 ? 'selected' : '')} key={pay}><input type='radio' name='payment' defaultChecked={i === 0}/><span>{i === 0 ? '▣' : i === 1 ? 'P' : '¥'}</span><b>{pay}</b></label>)}<div className='order-total'><p><span>商品合計</span><b>{yen(subtotal)}</b></p><p><span>配送料</span><b>{yen(fee)}</b></p><div><span>お支払い合計</span><strong>{yen(subtotal + fee)}</strong></div></div><button className='primary wide' onClick={() => { setCheckout(false); setTracking(true); setActiveTab('orders'); }}>{yen(subtotal + fee)}　注文を確定</button><small className='secure'>◇ 安全に暗号化されています</small></div></div>
+      </div></div>}
+
+      {tracking && <div className='modal-layer'><div className='tracking-card'><button className='modal-close' onClick={() => setTracking(false)}>×</button><div className='success-icon'>✓</div><p className='eyebrow'>ORDER #TK-0824</p><h2>ご注文を受け付けました</h2><p>အော်ဒါတင်ပြီးပါပြီ · 調理を始めています</p><div className='eta'><small>ESTIMATED DELIVERY</small><strong>35–40 <span>min</span></strong><div><i/></div></div><div className='timeline'><div className='done'><span>✓</span><div><b>Order received</b><small>注文受付　·　20:32</small></div></div><div className='current'><span>✦</span><div><b>Preparing</b><small>調理中　·　ただいま</small></div></div><div><span>○</span><div><b>Driver picked up</b><small>配達中</small></div></div><div><span>○</span><div><b>Delivered</b><small>配達完了</small></div></div></div><div className='driver'><span>KT</span><div><small>YOUR DRIVER</small><b>Ko Than · ★ 4.9</b></div><button>☎</button></div><button className='secondary wide' onClick={() => setTracking(false)}>ホームに戻る</button></div></div>}
+
+      {activeTab === 'mypage' && <div className='modal-layer' onMouseDown={(event) => event.currentTarget === event.target && setActiveTab('home')}><div className='profile-modal'><button className='modal-close' onClick={() => setActiveTab('home')}>×</button><div className='profile-hero'><span>{loggedIn ? 'AT' : '?'}</span><div><p className='eyebrow light'>MY PAGE</p><h2>{loggedIn ? 'Aye Thandar' : 'Guest Customer'}</h2><small>{loggedIn ? 'example@gmail.com' : 'ログインして注文履歴を保存'}</small></div></div>{!loggedIn && <button className='primary wide profile-login' onClick={() => { setStarted(false); setActiveTab('home'); }}>ログイン / Login</button>}<div className='profile-links'>{[['○','プロフィール','Profile'],['◈','配達先住所','Delivery Address'],['◴','注文履歴','Order History'],['♥','お気に入り',favorites.length + ' items'],['▣','支払い方法','Payment Methods'],['◎','言語設定','日本語 / မြန်မာ']].map((item) => <button key={item[1]}><span>{item[0]}</span><div><b>{item[1]}</b><small>{item[2]}</small></div><strong>›</strong></button>)}</div></div></div>}
+      {toast && <div className='toast'><span>✓</span>{toast}</div>}
+    </main>
+  );
+}

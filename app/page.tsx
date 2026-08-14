@@ -10,9 +10,19 @@ type Food = {
   defaultOption: string;
   defaultSpice: string;
   toppings: { id: string; label: string; price: number }[];
+  secondaryTitle?: string;
+  secondaryOptions?: { id: string; label: string; price: number }[];
+  defaultSecondary?: string;
+  spiceTitle?: string;
+  flavors?: { id: string; label: string }[];
+  hideSpice?: boolean;
+  multiTitle?: string;
+  multiOptions?: { id: string; label: string }[];
+  selectionLimit?: Record<string, number>;
 };
 type CartItem = Food & {
   quantity: number; selectedOption: string; selectedSpice: string;
+  selectedSecondary: string; selectedMulti: string[];
   selectedToppings: string[]; note: string; unitPrice: number;
 };
 
@@ -69,6 +79,63 @@ const foods: Food[] = [
     optionTitle: 'အရွယ်အစားရွေးပါ / サイズを選択', defaultOption: 'regular', defaultSpice: 'mild',
     options: [{id:'regular',label:'ပုံမှန် / 普通',price:0},{id:'large',label:'အကြီး / 大盛り',price:200}],
     toppings: [{id:'egg',label:'ကြက်ဥ / ゆで卵',price:100},{id:'chicken',label:'ကြက်သားအပို / 鶏肉追加',price:200},{id:'onion',label:'ကြက်သွန်ကြော် / フライドオニオン',price:100},{id:'noodle',label:'ခေါက်ဆွဲအပို / 麺追加',price:150}] },
+  { id: 7, mm: 'ကြက်သားဒံပေါက်', jp: 'チキンダンバウ', price: 1100, category: 'curry', popular: true,
+    description: '香り高いスパイスで炊いたご飯に、やわらかな鶏肉を合わせたミャンマー式ビリヤニ。',
+    image: '/chicken-danbauk.png', optionTitle: 'အရွယ်အစားရွေးပါ / サイズを選択', defaultOption: 'regular', defaultSpice: 'mild',
+    options: [{id:'regular',label:'ပုံမှန် / 普通',price:0},{id:'large',label:'အကြီး / 大盛り',price:250}],
+    toppings: [{id:'egg',label:'ကြက်ဥပြုတ် / ゆで卵',price:100},{id:'chicken',label:'ကြက်သားအပို / 鶏肉追加',price:250},{id:'rice',label:'ထမင်းအပို / ライス追加',price:150},{id:'salad',label:'သုပ်အပို / サラダ追加',price:150}] },
+  { id: 8, mm: 'ဇလုံထမင်းနယ်', jp: 'ミャンマー風混ぜご飯', price: 950, category: 'curry', popular: true,
+    description: 'ご飯とおかず、野菜を大きな器で混ぜ合わせて楽しむ、家庭的な一皿。',
+    image: '/myanmar-mixed-rice.png', optionTitle: 'အရွယ်အစားရွေးပါ / サイズを選択', defaultOption: 'regular', defaultSpice: 'mild',
+    options: [{id:'regular',label:'ပုံမှန် / 普通',price:0},{id:'large',label:'အကြီး / 大盛り',price:200}],
+    secondaryTitle: 'အဓိကဟင်းရွေးပါ / メインを選択', defaultSecondary: 'chicken',
+    secondaryOptions: [{id:'chicken',label:'ကြက်သား / 鶏肉',price:0},{id:'fish',label:'ငါး / 魚',price:0},{id:'egg',label:'ကြက်ဥ / 卵',price:0},{id:'vegetable',label:'အသီးအရွက် / 野菜',price:0}],
+    toppings: [{id:'egg',label:'ကြက်ဥ / ゆで卵',price:100},{id:'vegetable',label:'ဟင်းသီးဟင်းရွက်အပို / 野菜追加',price:150},{id:'dried-fish',label:'ငါးခြောက်ကြော် / 干し魚炒め',price:200}] },
+  { id: 9, mm: 'ပဲပြုတ်ထမင်း', jp: 'ゆで豆ご飯', price: 750, category: 'curry', popular: true,
+    description: 'やわらかく茹でた豆とご飯を香味油で和えた、シンプルで滋味深い定番ごはん。',
+    image: '/boiled-bean-rice.png', optionTitle: 'အရွယ်အစားရွေးပါ / サイズを選択', defaultOption: 'regular', defaultSpice: 'not-applicable', hideSpice: true,
+    options: [{id:'regular',label:'ပုံမှန် / 普通',price:0},{id:'large',label:'အကြီး / 大盛り',price:150}],
+    secondaryTitle: 'အရသာရွေးပါ / 味を選択', defaultSecondary: 'normal',
+    secondaryOptions: [{id:'normal',label:'ပုံမှန် / 普通',price:0},{id:'less-oil',label:'ဆီနည်း / 油少なめ',price:0},{id:'less-salt',label:'ဆားနည်း / 塩少なめ',price:0}],
+    toppings: [{id:'fried-egg',label:'ကြက်ဥကြော် / 目玉焼き',price:150},{id:'beans',label:'ပဲပြုတ်အပို / ゆで豆追加',price:100},{id:'dried-fish',label:'ငါးခြောက်ကြော် / 干し魚炒め',price:200},{id:'rice',label:'ထမင်းအပို / ライス追加',price:150}] },
+  { id: 10, mm: 'မြန်မာကြက်သားဟင်း', jp: 'ミャンマー風チキンカレー', price: 900, category: 'curry', popular: true,
+    description: '玉ねぎとスパイスをじっくり煮込んだ、鶏肉の旨みたっぷりのミャンマーカレー。',
+    image: '/myanmar-chicken-curry.png', optionTitle: 'ပမာဏရွေးပါ / 量を選択', defaultOption: 'regular', defaultSpice: 'mild',
+    options: [{id:'regular',label:'ပုံမှန် / 普通',price:0},{id:'extra-chicken',label:'ကြက်သားအပို / 鶏肉大盛り',price:250}],
+    toppings: [{id:'rice',label:'ထမင်း / ライス',price:200},{id:'potato',label:'အာလူးအပို / じゃがいも追加',price:100},{id:'sauce',label:'ဟင်းရည်အပို / カレーソース追加',price:100}] },
+  { id: 11, mm: 'မြန်မာငါးဟင်း', jp: 'ミャンマー風魚料理', price: 1000, category: 'curry', popular: true,
+    description: '魚の旨みを生かした、香り豊かなミャンマーの家庭料理。',
+    image: '', optionTitle: 'ချက်ပြုတ်ပုံရွေးပါ / 調理方法を選択', defaultOption: 'curry', defaultSpice: 'mild', spiceTitle: 'အရသာရွေးပါ / 味を選択',
+    flavors: [{id:'sweet',label:'အချို / 甘口'},{id:'mild',label:'အနည်းငယ်စပ် / ひかえめ'},{id:'normal',label:'ပုံမှန်စပ် / 普通'},{id:'hot',label:'အစပ် / 辛口'}],
+    options: [{id:'curry',label:'ငါးဟင်းချက် / 魚カレー',price:0},{id:'fried',label:'ငါးကြော် / 魚の唐揚げ',price:0}],
+    toppings: [{id:'rice',label:'ထမင်း / ライス',price:200},{id:'fish',label:'ငါးအပို / 魚追加',price:300},{id:'sauce',label:'ဟင်းရည်အပို / ソース追加',price:100}] },
+  { id: 12, mm: 'အသည်းပန်းဂေါ်ဖီကြော်', jp: 'レバーとカリフラワー炒め', price: 850, category: 'curry', popular: true,
+    description: 'コクのあるレバーと歯ざわりの良いカリフラワーを香ばしく炒めました。',
+    image: '/liver-cauliflower.png', optionTitle: 'အရွယ်အစားရွေးပါ / サイズを選択', defaultOption: 'regular', defaultSpice: 'mild',
+    options: [{id:'regular',label:'ပုံမှန် / 普通',price:0},{id:'large',label:'အကြီး / 大盛り',price:200}],
+    toppings: [{id:'liver',label:'အသည်းအပို / レバー追加',price:200},{id:'cauliflower',label:'ပန်းဂေါ်ဖီအပို / カリフラワー追加',price:100},{id:'rice',label:'ထမင်း / ライス',price:200}] },
+  { id: 13, mm: 'ကြက်ဟင်းခါးသီးကြက်ဥကြော်', jp: 'ゴーヤと卵炒め', price: 750, category: 'curry', popular: true,
+    description: 'ゴーヤのほろ苦さをふんわり卵が包む、やさしい味わいの炒め物。',
+    image: '/bitter-melon-egg.png', optionTitle: 'အရွယ်အစားရွေးပါ / サイズを選択', defaultOption: 'regular', defaultSpice: 'none',
+    options: [{id:'regular',label:'ပုံမှန် / 普通',price:0},{id:'large',label:'အကြီး / 大盛り',price:200}],
+    toppings: [{id:'egg',label:'ကြက်ဥအပို / 卵追加',price:100},{id:'goya',label:'ကြက်ဟင်းခါးသီးအပို / ゴーヤ追加',price:150},{id:'rice',label:'ထမင်း / ライス',price:200}] },
+  { id: 14, mm: 'ငပိရည်ကြိုတို့စရာဗန်း', jp: 'ミャンマー風発酵魚ディップと野菜の盛り合わせ', price: 850, category: 'salad', popular: true,
+    description: '発酵魚の深い旨みを楽しむディップと、彩り豊かな野菜の盛り合わせ。',
+    image: '/ngapi-dip-platter.png', optionTitle: 'ပမာဏရွေးပါ / 量を選択', defaultOption: 'one', defaultSpice: 'mild',
+    options: [{id:'one',label:'တစ်ယောက်စာ / 1人前',price:0},{id:'two',label:'နှစ်ယောက်စာ / 2人前',price:500}],
+    toppings: [{id:'vegetable',label:'ဟင်းသီးဟင်းရွက်အပို / 野菜追加',price:200},{id:'dip',label:'ငပိရည်ကြိုအပို / ディップ追加',price:150},{id:'okra',label:'ရုံးပတီသီးအပို / オクラ追加',price:100},{id:'cucumber',label:'သခွားသီးအပို / きゅうり追加',price:100}] },
+  { id: 15, mm: 'အစပ်ငါးခြောက်ကြော်', jp: 'ピリ辛干し魚炒め', price: 600, category: 'snack', popular: true,
+    description: '干し魚と香味野菜を香ばしく炒めた、ご飯がすすむピリ辛の一品。',
+    image: '/spicy-dried-fish.png', optionTitle: 'ပမာဏရွေးပါ / 量を選択', defaultOption: 'small', defaultSpice: 'mild',
+    options: [{id:'small',label:'အသေး / 小',price:0},{id:'large',label:'အကြီး / 大',price:250}],
+    toppings: [{id:'fish',label:'ငါးခြောက်အပို / 干し魚追加',price:200},{id:'onion',label:'ကြက်သွန်ကြော်အပို / フライドオニオン追加',price:100},{id:'rice',label:'ထမင်း / ライス',price:200}] },
+  { id: 16, mm: 'မြန်မာမုန့်အစုံ', jp: 'ミャンマー菓子盛り合わせ', price: 800, category: 'snack', popular: true,
+    description: 'ミャンマーの伝統菓子を少しずつ楽しめる、彩り豊かな盛り合わせ。',
+    image: '', optionTitle: 'မုန့်အရေအတွက်ရွေးပါ / 種類数を選択', defaultOption: 'three', defaultSpice: 'not-applicable', hideSpice: true,
+    options: [{id:'three',label:'သုံးမျိုး / 3種類',price:0},{id:'five',label:'ငါးမျိုး / 5種類',price:400}],
+    multiTitle: 'ကြိုက်နှစ်သက်သောမုန့်ရွေးပါ / お菓子を選択', selectionLimit: {three:3,five:5},
+    multiOptions: [{id:'semolina',label:'ဆနွင်းမကင်း / セモリナケーキ'},{id:'jelly',label:'ကျောက်ကျော / ミャンマー風ゼリー'},{id:'donut',label:'မုန့်လက်ကောက် / リングドーナツ'},{id:'steamed-cake',label:'မုန့်ပေါင်း / 蒸し菓子'},{id:'sticky-rice',label:'ကောက်ညှင်းပေါင်း / 蒸しもち米'},{id:'tapioca',label:'အုန်းနို့သာကူ / ココナッツミルクタピオカ'}],
+    toppings: [{id:'coconut',label:'အုန်းသီးဖတ် / ココナッツ追加',price:100},{id:'sesame',label:'နှမ်း / ごま追加',price:50},{id:'palm-sugar',label:'ထန်းလျက်ရည် / パームシュガーソース',price:100}] },
 ];
 
 const yen = (value: number) => '¥' + value.toLocaleString('ja-JP');
@@ -86,6 +153,8 @@ export default function Home() {
   const [detailQty, setDetailQty] = useState(1);
   const [detailOption, setDetailOption] = useState<string | null>(null);
   const [detailSpice, setDetailSpice] = useState<string | null>(null);
+  const [detailSecondary, setDetailSecondary] = useState<string | null>(null);
+  const [detailMulti, setDetailMulti] = useState<string[]>([]);
   const [detailToppings, setDetailToppings] = useState<string[]>([]);
   const [detailNote, setDetailNote] = useState('');
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -106,9 +175,15 @@ export default function Home() {
   const fee = method === 'delivery' && cart.length ? 300 : 0;
   const detailUnitPrice = selected ? selected.price
     + (selected.options.find((option) => option.id === detailOption)?.price || 0)
+    + (selected.secondaryOptions?.find((option) => option.id === detailSecondary)?.price || 0)
     + selected.toppings.filter((topping) => detailToppings.includes(topping.id)).reduce((sum, topping) => sum + topping.price, 0)
     : 0;
-  const requiredComplete = Boolean(detailOption && detailSpice);
+  const requiredMultiCount = selected?.selectionLimit?.[detailOption || ''] || 0;
+  const requiredComplete = Boolean(
+    detailOption && detailSpice
+    && (!selected?.secondaryOptions || detailSecondary)
+    && (!selected?.multiOptions || detailMulti.length === requiredMultiCount)
+  );
 
   const flash = (message: string) => {
     setToast(message);
@@ -119,18 +194,22 @@ export default function Home() {
     setDetailQty(1);
     setDetailOption(food.defaultOption || null);
     setDetailSpice(food.defaultSpice || null);
+    setDetailSecondary(food.defaultSecondary || null);
+    setDetailMulti([]);
     setDetailToppings([]);
     setDetailNote('');
   };
   const addSelected = () => {
-    if (!selected || !detailOption || !detailSpice) return;
+    if (!selected || !detailOption || !detailSpice || !requiredComplete) return;
     const optionPrice = selected.options.find((option) => option.id === detailOption)?.price || 0;
+    const secondaryPrice = selected.secondaryOptions?.find((option) => option.id === detailSecondary)?.price || 0;
     const toppingPrice = selected.toppings.filter((topping) => detailToppings.includes(topping.id)).reduce((sum, topping) => sum + topping.price, 0);
-    const unitPrice = selected.price + optionPrice + toppingPrice;
+    const unitPrice = selected.price + optionPrice + secondaryPrice + toppingPrice;
     setCart((items) => {
       const toppingKey = detailToppings.slice().sort().join(',');
-      const found = items.findIndex((item) => item.id === selected.id && item.selectedOption === detailOption && item.selectedSpice === detailSpice && item.selectedToppings.slice().sort().join(',') === toppingKey && item.note === detailNote);
-      if (found < 0) return items.concat([{ ...selected, quantity: detailQty, selectedOption: detailOption, selectedSpice: detailSpice, selectedToppings: detailToppings, note: detailNote, unitPrice }]);
+      const multiKey = detailMulti.slice().sort().join(',');
+      const found = items.findIndex((item) => item.id === selected.id && item.selectedOption === detailOption && item.selectedSpice === detailSpice && item.selectedSecondary === (detailSecondary || '') && item.selectedMulti.slice().sort().join(',') === multiKey && item.selectedToppings.slice().sort().join(',') === toppingKey && item.note === detailNote);
+      if (found < 0) return items.concat([{ ...selected, quantity: detailQty, selectedOption: detailOption, selectedSpice: detailSpice, selectedSecondary: detailSecondary || '', selectedMulti: detailMulti, selectedToppings: detailToppings, note: detailNote, unitPrice }]);
       return items.map((item, index) => index === found ? { ...item, quantity: item.quantity + detailQty } : item);
     });
     setSelected(null);
@@ -219,7 +298,7 @@ export default function Home() {
         {filteredFoods.length ? <div className='food-grid'>
           {filteredFoods.map((food) => <article className='food-card' key={food.id}>
             <button className={'heart ' + (favorites.includes(food.id) ? 'liked' : '')} aria-label='Favorite' onClick={() => setFavorites((list) => list.includes(food.id) ? list.filter((id) => id !== food.id) : list.concat(food.id))}>♥</button>
-            <button className='food-image' onClick={() => openFood(food)}><img src={food.image} alt={food.jp}/>{food.special && <span className='special-badge'>TODAY&apos;S SPECIAL</span>}</button>
+            <button className='food-image' onClick={() => openFood(food)}>{food.image ? <img src={food.image} alt={food.jp}/> : <span className='food-placeholder'><b>Ⴙ</b><small>{food.mm}<br/>{food.jp}</small></span>}{food.special && <span className='special-badge'>TODAY&apos;S SPECIAL</span>}</button>
             <div className='food-info'><div className='food-title'><div><small>{food.mm}</small><h3>{food.jp}</h3></div><span className='spicy'>辛さ選択</span></div><p>{food.description}</p><div className='food-bottom'><strong>{yen(food.price)}</strong><button onClick={() => openFood(food)}>＋ 選ぶ</button></div></div>
           </article>)}
         </div> : <div className='empty-state'><span>⌕</span><h3>料理が見つかりません</h3><button onClick={() => setQuery('')}>検索をクリア</button></div>}
@@ -239,7 +318,7 @@ export default function Home() {
       {selected && <div className='modal-layer' onMouseDown={(event) => event.currentTarget === event.target && setSelected(null)}>
         <div className='detail-drawer'>
           <button className='modal-close' onClick={() => setSelected(null)}>×</button>
-          <div className='detail-photo'><img src={selected.image} alt={selected.jp}/><span>{selected.category.toUpperCase()}</span></div>
+          <div className='detail-photo'>{selected.image ? <img src={selected.image} alt={selected.jp}/> : <div className='detail-placeholder'><b>Ⴙ</b><strong>{selected.mm}</strong><small>{selected.jp}</small></div>}<span>{selected.category.toUpperCase()}</span></div>
           <div className='detail-content'>
             <p className='eyebrow'>FOOD DETAIL</p>
             <small className='mm-name'>{selected.mm}</small>
@@ -258,15 +337,36 @@ export default function Home() {
               {selected.id === 5 && detailOption === 'oil' && <div className='soup-note'><b>ဟင်းရည်သီးခြားပါဝင်သည်</b><span>スープ付き</span></div>}
             </div>
 
-            <div className='detail-option-block'>
-              <div className='detail-option-title'><strong>အစပ်အဆင့်ရွေးပါ / 辛さを選択</strong><span>（必須）</span></div>
+            {selected.secondaryOptions && <div className='detail-option-block'>
+              <div className='detail-option-title'><strong>{selected.secondaryTitle}</strong><span>（必須）</span></div>
+              <div className='choice-list'>
+                {selected.secondaryOptions.map((option) => <label className={detailSecondary === option.id ? 'selected' : ''} key={option.id}>
+                  <input type='radio' name='secondary-option' checked={detailSecondary === option.id} onChange={() => setDetailSecondary(option.id)}/>
+                  <span className='radio-mark'/><b>{option.label}</b>{option.price > 0 && <strong>+{yen(option.price)}</strong>}
+                </label>)}
+              </div>
+            </div>}
+
+            {!selected.hideSpice && <div className='detail-option-block'>
+              <div className='detail-option-title'><strong>{selected.spiceTitle || 'အစပ်အဆင့်ရွေးပါ / 辛さを選択'}</strong><span>（必須）</span></div>
               <div className='choice-list spice-list'>
-                {spiceOptions.map((spice) => <label className={detailSpice === spice.id ? 'selected' : ''} key={spice.id}>
+                {(selected.flavors || spiceOptions).map((spice) => <label className={detailSpice === spice.id ? 'selected' : ''} key={spice.id}>
                   <input type='radio' name='spice-option' checked={detailSpice === spice.id} onChange={() => setDetailSpice(spice.id)}/>
                   <span className='radio-mark'/><b>{spice.label}</b>
                 </label>)}
               </div>
-            </div>
+            </div>}
+
+            {selected.multiOptions && <div className='detail-option-block'>
+              <div className='detail-option-title'><strong>{selected.multiTitle}</strong><span>（必須・複数選択可）</span></div>
+              <p className='selection-counter'>{requiredMultiCount}種類を選択：<b>{detailMulti.length} / {requiredMultiCount}</b></p>
+              <div className='choice-list topping-list'>
+                {selected.multiOptions.map((option) => <label className={detailMulti.includes(option.id) ? 'selected' : ''} key={option.id}>
+                  <input type='checkbox' checked={detailMulti.includes(option.id)} onChange={() => setDetailMulti((list) => list.includes(option.id) ? list.filter((id) => id !== option.id) : list.length < requiredMultiCount ? list.concat(option.id) : list)}/>
+                  <span className='check-mark'/><b>{option.label}</b>
+                </label>)}
+              </div>
+            </div>}
 
             <div className='detail-option-block'>
               <div className='detail-option-title'><strong>Topping ထပ်ထည့်ရန်</strong><span>（任意）</span></div>
@@ -295,7 +395,17 @@ export default function Home() {
 
       {showCart && <div className='modal-layer right' onMouseDown={(event) => event.currentTarget === event.target && setShowCart(false)}><aside className='cart-drawer'>
         <div className='drawer-head'><div><p className='eyebrow'>YOUR ORDER</p><h2>カート <span>{cartCount}点</span></h2></div><button className='modal-close static' onClick={() => setShowCart(false)}>×</button></div>
-        {cart.length ? <><div className='cart-list'>{cart.map((item, index) => <div className='cart-item' key={item.id + '-' + index}><img src={item.image} alt=''/><div><strong>{item.mm} / {item.jp}</strong><small>{item.options.find((option) => option.id === item.selectedOption)?.label} · {spiceOptions.find((spice) => spice.id === item.selectedSpice)?.label}</small>{item.selectedToppings.length > 0 && <small>+ {item.toppings.filter((topping) => item.selectedToppings.includes(topping.id)).map((topping) => topping.label).join('、')}</small>}{item.note && <small className='cart-note'>備考: {item.note}</small>}<div className='mini-quantity'><button onClick={() => setCart((items) => items.map((entry, i) => i === index ? { ...entry, quantity: Math.max(1, entry.quantity - 1) } : entry))}>−</button><span>{item.quantity}</span><button onClick={() => setCart((items) => items.map((entry, i) => i === index ? { ...entry, quantity: entry.quantity + 1 } : entry))}>+</button></div></div><div className='cart-price'><button onClick={() => setCart((items) => items.filter((_, i) => i !== index))}>×</button><strong>{yen(item.unitPrice * item.quantity)}</strong></div></div>)}</div>
+        {cart.length ? <><div className='cart-list'>{cart.map((item, index) => <div className='cart-item' key={item.id + '-' + index}>
+          {item.image ? <img src={item.image} alt=''/> : <span className='cart-placeholder'>Ⴙ</span>}
+          <div><strong>{item.mm} / {item.jp}</strong>
+            <small>{item.options.find((option) => option.id === item.selectedOption)?.label}{!item.hideSpice && ' · ' + (item.flavors || spiceOptions).find((spice) => spice.id === item.selectedSpice)?.label}</small>
+            {item.secondaryOptions && <small>+ {item.secondaryOptions.find((option) => option.id === item.selectedSecondary)?.label}</small>}
+            {item.selectedMulti.length > 0 && <small>+ {item.multiOptions?.filter((option) => item.selectedMulti.includes(option.id)).map((option) => option.label).join('、')}</small>}
+            {item.selectedToppings.length > 0 && <small>+ {item.toppings.filter((topping) => item.selectedToppings.includes(topping.id)).map((topping) => topping.label).join('、')}</small>}
+            {item.note && <small className='cart-note'>備考: {item.note}</small>}
+            <div className='mini-quantity'><button onClick={() => setCart((items) => items.map((entry, i) => i === index ? { ...entry, quantity: Math.max(1, entry.quantity - 1) } : entry))}>−</button><span>{item.quantity}</span><button onClick={() => setCart((items) => items.map((entry, i) => i === index ? { ...entry, quantity: entry.quantity + 1 } : entry))}>+</button></div>
+          </div><div className='cart-price'><button onClick={() => setCart((items) => items.filter((_, i) => i !== index))}>×</button><strong>{yen(item.unitPrice * item.quantity)}</strong></div>
+        </div>)}</div>
           <label className='coupon'><span>◇</span><input placeholder='クーポンコード'/><button>適用</button></label><textarea className='notes' placeholder='お店へのメモ（任意）'/>
           <div className='summary'><p><span>小計</span><b>{yen(subtotal)}</b></p><p><span>配送料</span><b>{fee ? yen(fee) : '無料'}</b></p><div><span>合計 <small>（税込）</small></span><strong>{yen(subtotal + fee)}</strong></div></div>
           <button className='primary wide checkout-button' onClick={() => { setShowCart(false); setCheckout(true); }}>レジに進む <span>→</span></button></> :

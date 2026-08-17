@@ -143,7 +143,7 @@ const foods: Food[] = [
     toppings: [{id:'ginger',label:'ဂျင်းအပို / 生姜追加',price:100},{id:'dried-shrimp',label:'ပုစွန်ခြောက်အပို / 干しエビ追加',price:150},{id:'peanut',label:'မြေပဲအပို / ピーナッツ追加',price:100},{id:'sesame',label:'နှမ်းအပို / ごま追加',price:50}] },
   { id: 18, mm: 'ပဲဂေါ်ဖီသုပ်', jp: '豆とキャベツのサラダ', price: 600, category: 'salad', popular: true,
     description: '豆の香ばしさとキャベツの歯ざわりを楽しむ、軽やかなミャンマー風サラダ。',
-    image: '', optionTitle: 'ပမာဏရွေးပါ / 量を選択', defaultOption: 'one', defaultSpice: 'mild',
+    image: '/bean-cabbage-salad.png', optionTitle: 'ပမာဏရွေးပါ / 量を選択', defaultOption: 'one', defaultSpice: 'mild',
     options: [{id:'one',label:'တစ်ယောက်စာ / 1人前',price:0},{id:'two',label:'နှစ်ယောက်စာ / 2人前',price:400}],
     toppings: [{id:'fried-beans',label:'ပဲကြော်အပို / 揚げ豆追加',price:100},{id:'peanut',label:'မြေပဲအပို / ピーナッツ追加',price:100},{id:'tomato',label:'ခရမ်းချဉ်သီးအပို / トマト追加',price:100},{id:'cabbage',label:'ဂေါ်ဖီအပို / キャベツ追加',price:100}] },
   { id: 19, mm: 'သရက်သီးသုပ်', jp: 'ミャンマー風青マンゴーサラダ', price: 650, category: 'salad', popular: true,

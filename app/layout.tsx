@@ -5,7 +5,7 @@ import './globals.css';
 const geist = Geist({ variable: '--font-geist', subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'HOME MYANMAR RESTRUANT | Naha',
+  title: 'အိမ်လွမ်းပြေ',
   description: '那覇で本格ミャンマー料理をデリバリー。Authentic Myanmar flavors, delivered to your table.',
   icons: { icon: '/favicon.svg', shortcut: '/favicon.svg' },
 };

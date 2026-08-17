@@ -124,7 +124,7 @@ const foods: Food[] = [
     image: '/ngapi-dip-platter.png', optionTitle: 'ပမာဏရွေးပါ / 量を選択', defaultOption: 'one', defaultSpice: 'mild',
     options: [{id:'one',label:'တစ်ယောက်စာ / 1人前',price:0},{id:'two',label:'နှစ်ယောက်စာ / 2人前',price:500}],
     toppings: [{id:'vegetable',label:'ဟင်းသီးဟင်းရွက်အပို / 野菜追加',price:200},{id:'dip',label:'ငပိရည်ကြိုအပို / ディップ追加',price:150},{id:'okra',label:'ရုံးပတီသီးအပို / オクラ追加',price:100},{id:'cucumber',label:'သခွားသီးအပို / きゅうり追加',price:100}] },
-  { id: 15, mm: 'အစပ်ငါးခြောက်ကြော်', jp: 'ピリ辛干し魚炒め', price: 600, category: 'snack', popular: true,
+  { id: 15, mm: 'အစပ်ငါးခြောက်ကြော်', jp: 'ピリ辛干し魚炒め', price: 600, category: 'curry', popular: true,
     description: '干し魚と香味野菜を香ばしく炒めた、ご飯がすすむピリ辛の一品。',
     image: '/spicy-dried-fish.png', optionTitle: 'ပမာဏရွေးပါ / 量を選択', defaultOption: 'small', defaultSpice: 'mild',
     options: [{id:'small',label:'အသေး / 小',price:0},{id:'large',label:'အကြီး / 大',price:250}],
@@ -302,7 +302,7 @@ export default function Home() {
           </div>
           <div className='auth-card'>
             <button className='close-welcome' onClick={() => setStarted(true)} aria-label='Close'>×</button>
-            <div className='brand compact'><span>Ⴙ</span><div><strong>THAZIN</strong><small>Myanmar Kitchen</small></div></div>
+            <div className='brand compact'><span>H</span><div><strong>HOME</strong><small>MYANMAR RESTRUANT</small></div></div>
             <p className='eyebrow'>{signup ? 'JOIN OUR TABLE' : 'WELCOME BACK'}</p>
             <h2>{signup ? '新規登録' : 'おかえりなさい'}</h2>
             <p className='auth-mm'>{signup ? 'အကောင့်အသစ်ဖွင့်ရန်' : 'ပြန်လည်ကြိုဆိုပါတယ်'}</p>
@@ -322,7 +322,7 @@ export default function Home() {
       )}
 
       <header className='topbar'>
-        <button className='brand' onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}><span>Ⴙ</span><div><strong>THAZIN</strong><small>Myanmar Kitchen</small></div></button>
+        <button className='brand' onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}><span>H</span><div><strong>HOME</strong><small>MYANMAR RESTRUANT</small></div></button>
         <div className='header-location'><span className='pin'>●</span><div><small>お届け先</small><strong>東京都 新宿区 西新宿 2-8</strong></div><span>⌄</span></div>
         <div className='header-actions'>
           <button className='language' onClick={() => setLanguage(language === 'jp' ? 'mm' : 'jp')}><span>{language === 'jp' ? 'JP' : 'MM'}</span>{language === 'jp' ? '日本語' : 'မြန်မာ'}</button>
@@ -376,7 +376,7 @@ export default function Home() {
         <div className='promo-price'><small>FAMILY SET</small><strong>¥3,800</strong><span>通常 ¥4,600</span></div>
       </section>
 
-      <footer><div className='brand inverted'><span>Ⴙ</span><div><strong>THAZIN</strong><small>Myanmar Kitchen</small></div></div><p>東京で楽しむ、本格ミャンマー料理。</p><div><span>営業時間 11:00–22:00</span><span>¥ Japanese Yen</span></div></footer>
+      <footer><div className='brand inverted'><span>H</span><div><strong>HOME</strong><small>MYANMAR RESTRUANT</small></div></div><p>東京で楽しむ、本格ミャンマー料理。</p><div><span>営業時間 11:00–22:00</span><span>¥ Japanese Yen</span></div></footer>
 
       <nav className='bottom-nav' aria-label='Main navigation'>
         {[['home','⌂','ホーム'],['menu','≡','メニュー'],['cart','◇','カート'],['orders','◴','注文'],['mypage','○','マイページ']].map((item) => <button key={item[0]} className={activeTab === item[0] ? 'active' : ''} onClick={() => goTab(item[0])}><span>{item[1]}{item[0] === 'cart' && cartCount > 0 && <b>{cartCount}</b>}</span><small>{item[2]}</small></button>)}

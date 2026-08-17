@@ -119,7 +119,7 @@ const foods: Food[] = [
     image: '/bitter-melon-egg.png', optionTitle: 'အရွယ်အစားရွေးပါ / サイズを選択', defaultOption: 'regular', defaultSpice: 'none',
     options: [{id:'regular',label:'ပုံမှန် / 普通',price:0},{id:'large',label:'အကြီး / 大盛り',price:200}],
     toppings: [{id:'egg',label:'ကြက်ဥအပို / 卵追加',price:100},{id:'goya',label:'ကြက်ဟင်းခါးသီးအပို / ゴーヤ追加',price:150},{id:'rice',label:'ထမင်း / ライス',price:200}] },
-  { id: 14, mm: 'ငပိရည်ကြိုတို့စရာဗန်း', jp: 'ミャンマー風発酵魚ディップと野菜の盛り合わせ', price: 850, category: 'salad', popular: true,
+  { id: 14, mm: 'ငပိရည်ကြိုတို့စရာဗန်း', jp: 'ミャンマー風発酵魚ディップと野菜の盛り合わせ', price: 850, category: 'curry', popular: true,
     description: '発酵魚の深い旨みを楽しむディップと、彩り豊かな野菜の盛り合わせ。',
     image: '/ngapi-dip-platter.png', optionTitle: 'ပမာဏရွေးပါ / 量を選択', defaultOption: 'one', defaultSpice: 'mild',
     options: [{id:'one',label:'တစ်ယောက်စာ / 1人前',price:0},{id:'two',label:'နှစ်ယောက်စာ / 2人前',price:500}],

@@ -345,7 +345,7 @@ export default function Home() {
   return (
     <main className='app-shell'>
       <header className='topbar'>
-        <button className='brand' onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}><span>H</span><div><strong>HOME</strong><small>MYANMAR RESTRUANT</small></div></button>
+        <button className='brand' onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}><span>H</span><div><strong>HOME</strong><small>MYANMAR RESTRUANT</small><span className='brand-tagline'>那覇で楽しむ、本格ミャンマー料理。</span></div></button>
         <div className='header-location'><span className='pin'>●</span><div><small>お届け先</small><strong>沖縄県 那覇市 泉崎 1-1</strong></div><span>⌄</span></div>
         <div className='header-actions'>
           <button className='language' onClick={() => setLanguage(language === 'jp' ? 'mm' : 'jp')}><span>{language === 'jp' ? 'JP' : 'MM'}</span>{language === 'jp' ? '日本語' : 'မြန်မာ'}</button>

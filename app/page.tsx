@@ -345,7 +345,7 @@ export default function Home() {
   return (
     <main className='app-shell'>
       <header className='topbar'>
-        <button className='brand' onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}><span>H</span><div><strong>HOME</strong><small>MYANMAR RESTRUANT</small><span className='brand-tagline'>那覇で楽しむ、本格ミャンマー料理。</span></div></button>
+        <button className='brand' onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}><span>H</span><div><strong>အိမ်လွမ်းပြေ</strong><small>MYANMAR RESTRUANT</small><span className='brand-tagline'>那覇で楽しむ、本格ミャンマー料理。</span></div></button>
         <div className='header-location'><span className='pin'>●</span><div><small>お届け先</small><strong>沖縄県 那覇市 泉崎 1-1</strong></div><span>⌄</span></div>
         <div className='header-actions'>
           <button className='language' onClick={() => setLanguage(language === 'jp' ? 'mm' : 'jp')}><span>{language === 'jp' ? 'JP' : 'MM'}</span>{language === 'jp' ? '日本語' : 'မြန်မာ'}</button>
@@ -399,7 +399,7 @@ export default function Home() {
         <div className='promo-price'><small>FAMILY SET</small><strong>¥3,800</strong><span>通常 ¥4,600</span></div>
       </section>
 
-      <footer><div className='brand inverted'><span>H</span><div><strong>HOME</strong><small>MYANMAR RESTRUANT</small></div></div><p>那覇で楽しむ、本格ミャンマー料理。</p><div><span>営業時間 11:00–22:00</span><a href='mailto:home@gmail.com'>home@gmail.com</a><a href='tel:09012340000'>090-1234-0000</a></div></footer>
+      <footer><div className='brand inverted'><span>H</span><div><strong>အိမ်လွမ်းပြေ</strong><small>MYANMAR RESTRUANT</small></div></div><p>那覇で楽しむ、本格ミャンマー料理。</p><div><span>営業時間 11:00–22:00</span><a href='mailto:home@gmail.com'>home@gmail.com</a><a href='tel:09012340000'>090-1234-0000</a></div></footer>
 
       <nav className='bottom-nav' aria-label='Main navigation'>
         {[['home','⌂','ホーム'],['menu','≡','メニュー'],['cart','◇','カート'],['orders','◴','注文'],['mypage','○','注文情報']].map((item) => <button key={item[0]} className={activeTab === item[0] ? 'active' : ''} onClick={() => goTab(item[0])}><span>{item[1]}{item[0] === 'cart' && cartCount > 0 && <b>{cartCount}</b>}</span><small>{item[2]}</small></button>)}

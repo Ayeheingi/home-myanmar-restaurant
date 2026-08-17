@@ -264,9 +264,6 @@ const foods: Food[] = [
 const yen = (value: number) => '¥' + value.toLocaleString('ja-JP');
 
 export default function Home() {
-  const [started, setStarted] = useState(false);
-  const [signup, setSignup] = useState(false);
-  const [loggedIn, setLoggedIn] = useState(false);
   const [language, setLanguage] = useState<'jp' | 'mm'>('jp');
   const [activeTab, setActiveTab] = useState('home');
   const [category, setCategory] = useState('popular');
@@ -347,43 +344,13 @@ export default function Home() {
 
   return (
     <main className='app-shell'>
-      {!started && (
-        <div className='welcome-overlay'>
-          <div className='welcome-visual'>
-            <div className='welcome-mark'><span>Ⴙ</span></div>
-            <p className='eyebrow light'>TOKYO · MYANMAR KITCHEN</p>
-            <h1>やさしい食卓へ、<br/><em>ミャンマーの香りを。</em></h1>
-            <p>毎日丁寧に仕込む、故郷の味。<br/>အိမ်လွမ်းပြေ မြန်မာ့အရသာ။</p>
-            <div className='welcome-chips'><span>30–45 min</span><span>4.9 ★</span><span>¥1,200〜</span></div>
-          </div>
-          <div className='auth-card'>
-            <button className='close-welcome' onClick={() => setStarted(true)} aria-label='Close'>×</button>
-            <div className='brand compact'><span>H</span><div><strong>HOME</strong><small>MYANMAR RESTRUANT</small></div></div>
-            <p className='eyebrow'>{signup ? 'JOIN OUR TABLE' : 'WELCOME BACK'}</p>
-            <h2>{signup ? '新規登録' : 'おかえりなさい'}</h2>
-            <p className='auth-mm'>{signup ? 'အကောင့်အသစ်ဖွင့်ရန်' : 'ပြန်လည်ကြိုဆိုပါတယ်'}</p>
-            {signup && <label><span>お名前 / အမည်</span><input placeholder='Aye Thandar'/></label>}
-            <label><span>メールアドレス</span><input type='email' placeholder='example@gmail.com'/></label>
-            {signup && <label><span>電話番号</span><input placeholder='+81 90-1234-5678'/></label>}
-            <label><span>パスワード</span><input type='password' placeholder='••••••••'/></label>
-            {!signup && <button className='text-link'>パスワードを忘れた方</button>}
-            <button className='primary wide' onClick={() => { setLoggedIn(true); setStarted(true); flash('ログインしました'); }}>
-              {signup ? 'アカウントを作成 / Sign Up' : 'ログイン / Login'}
-            </button>
-            <div className='or'><span/>OR<span/></div>
-            <button className='secondary wide' onClick={() => setStarted(true)}>ゲストとして続ける</button>
-            <p className='auth-switch'>{signup ? 'アカウントをお持ちの方' : 'アカウントをお持ちでない方'} <button onClick={() => setSignup(!signup)}>{signup ? 'ログイン' : '新規登録'}</button></p>
-          </div>
-        </div>
-      )}
-
       <header className='topbar'>
         <button className='brand' onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}><span>H</span><div><strong>HOME</strong><small>MYANMAR RESTRUANT</small></div></button>
         <div className='header-location'><span className='pin'>●</span><div><small>お届け先</small><strong>沖縄県 那覇市 泉崎 1-1</strong></div><span>⌄</span></div>
         <div className='header-actions'>
           <button className='language' onClick={() => setLanguage(language === 'jp' ? 'mm' : 'jp')}><span>{language === 'jp' ? 'JP' : 'MM'}</span>{language === 'jp' ? '日本語' : 'မြန်မာ'}</button>
           <button className='round' aria-label='Notifications'>♢<span className='alert-dot'/></button>
-          <button className='profile' onClick={() => goTab('mypage')}><span>{loggedIn ? 'AT' : '?'}</span><div><small>{loggedIn ? 'Aye Thandar' : 'Guest'}</small><strong>{loggedIn ? 'マイページ' : 'ログイン'}</strong></div></button>
+          <button className='profile' onClick={() => goTab('mypage')}><span>G</span><div><small>Guest</small><strong>注文情報</strong></div></button>
         </div>
       </header>
 
@@ -432,10 +399,10 @@ export default function Home() {
         <div className='promo-price'><small>FAMILY SET</small><strong>¥3,800</strong><span>通常 ¥4,600</span></div>
       </section>
 
-      <footer><div className='brand inverted'><span>H</span><div><strong>HOME</strong><small>MYANMAR RESTRUANT</small></div></div><p>那覇で楽しむ、本格ミャンマー料理。</p><div><span>営業時間 11:00–22:00</span><span>¥ Japanese Yen</span></div></footer>
+      <footer><div className='brand inverted'><span>H</span><div><strong>HOME</strong><small>MYANMAR RESTRUANT</small></div></div><p>那覇で楽しむ、本格ミャンマー料理。</p><div><span>営業時間 11:00–22:00</span><a href='mailto:home@gmail.com'>home@gmail.com</a><a href='tel:09012340000'>090-1234-0000</a></div></footer>
 
       <nav className='bottom-nav' aria-label='Main navigation'>
-        {[['home','⌂','ホーム'],['menu','≡','メニュー'],['cart','◇','カート'],['orders','◴','注文'],['mypage','○','マイページ']].map((item) => <button key={item[0]} className={activeTab === item[0] ? 'active' : ''} onClick={() => goTab(item[0])}><span>{item[1]}{item[0] === 'cart' && cartCount > 0 && <b>{cartCount}</b>}</span><small>{item[2]}</small></button>)}
+        {[['home','⌂','ホーム'],['menu','≡','メニュー'],['cart','◇','カート'],['orders','◴','注文'],['mypage','○','注文情報']].map((item) => <button key={item[0]} className={activeTab === item[0] ? 'active' : ''} onClick={() => goTab(item[0])}><span>{item[1]}{item[0] === 'cart' && cartCount > 0 && <b>{cartCount}</b>}</span><small>{item[2]}</small></button>)}
       </nav>
 
       {selected && <div className='modal-layer' onMouseDown={(event) => event.currentTarget === event.target && setSelected(null)}>
@@ -538,13 +505,13 @@ export default function Home() {
       {checkout && <div className='modal-layer'><div className='checkout-modal'><button className='modal-close' onClick={() => setCheckout(false)}>×</button>
         <div className='checkout-title'><p className='eyebrow'>CHECKOUT</p><h2>お届け情報</h2><p>အော်ဒါအချက်အလက်များ</p></div>
         <div className='checkout-grid'><div><h3>1. 受け取り方法</h3><div className='method-switch checkout-method'><button className={method === 'delivery' ? 'active' : ''} onClick={() => setMethod('delivery')}><span>◈</span><div><b>Delivery</b><small>ご指定の住所へ</small></div></button><button className={method === 'pickup' ? 'active' : ''} onClick={() => setMethod('pickup')}><span>▣</span><div><b>Pickup</b><small>お店で受け取り</small></div></button></div>
-          <h3>2. お客様情報</h3><div className='form-grid'><label><span>お名前</span><input defaultValue={loggedIn ? 'Aye Thandar' : ''} placeholder='例）アイ・タンダー'/></label><label><span>電話番号</span><input placeholder='090-1234-5678'/></label>{method === 'delivery' && <><label><span>郵便番号</span><input placeholder='900-0021'/></label><label className='full'><span>配達先住所</span><input placeholder='沖縄県那覇市泉崎 1-1-1'/></label></>}</div>
+          <h3>2. お客様情報</h3><div className='form-grid'><label><span>お名前</span><input placeholder='例）アイ・タンダー'/></label><label><span>電話番号</span><input placeholder='090-1234-5678'/></label>{method === 'delivery' && <><label><span>郵便番号</span><input placeholder='900-0021'/></label><label className='full'><span>配達先住所</span><input placeholder='沖縄県那覇市泉崎 1-1-1'/></label></>}</div>
         </div><div className='payment-side'><h3>3. お支払い</h3>{['Credit Card','PayPay',method === 'delivery' ? 'Cash on delivery' : 'Pay at restaurant'].map((pay, i) => <label className={'payment ' + (i === 0 ? 'selected' : '')} key={pay}><input type='radio' name='payment' defaultChecked={i === 0}/><span>{i === 0 ? '▣' : i === 1 ? 'P' : '¥'}</span><b>{pay}</b></label>)}<div className='order-total'><p><span>商品合計</span><b>{yen(subtotal)}</b></p><p><span>配送料</span><b>{yen(fee)}</b></p><div><span>お支払い合計</span><strong>{yen(subtotal + fee)}</strong></div></div><button className='primary wide' onClick={() => { setCheckout(false); setTracking(true); setActiveTab('orders'); }}>{yen(subtotal + fee)}　注文を確定</button><small className='secure'>◇ 安全に暗号化されています</small></div></div>
       </div></div>}
 
       {tracking && <div className='modal-layer'><div className='tracking-card'><button className='modal-close' onClick={() => setTracking(false)}>×</button><div className='success-icon'>✓</div><p className='eyebrow'>ORDER #TK-0824</p><h2>ご注文を受け付けました</h2><p>အော်ဒါတင်ပြီးပါပြီ · 調理を始めています</p><div className='eta'><small>ESTIMATED DELIVERY</small><strong>35–40 <span>min</span></strong><div><i/></div></div><div className='timeline'><div className='done'><span>✓</span><div><b>Order received</b><small>注文受付　·　20:32</small></div></div><div className='current'><span>✦</span><div><b>Preparing</b><small>調理中　·　ただいま</small></div></div><div><span>○</span><div><b>Driver picked up</b><small>配達中</small></div></div><div><span>○</span><div><b>Delivered</b><small>配達完了</small></div></div></div><div className='driver'><span>KT</span><div><small>YOUR DRIVER</small><b>Ko Than · ★ 4.9</b></div><button>☎</button></div><button className='secondary wide' onClick={() => setTracking(false)}>ホームに戻る</button></div></div>}
 
-      {activeTab === 'mypage' && <div className='modal-layer' onMouseDown={(event) => event.currentTarget === event.target && setActiveTab('home')}><div className='profile-modal'><button className='modal-close' onClick={() => setActiveTab('home')}>×</button><div className='profile-hero'><span>{loggedIn ? 'AT' : '?'}</span><div><p className='eyebrow light'>MY PAGE</p><h2>{loggedIn ? 'Aye Thandar' : 'Guest Customer'}</h2><small>{loggedIn ? 'example@gmail.com' : 'ログインして注文履歴を保存'}</small></div></div>{!loggedIn && <button className='primary wide profile-login' onClick={() => { setStarted(false); setActiveTab('home'); }}>ログイン / Login</button>}<div className='profile-links'>{[['○','プロフィール','Profile'],['◈','配達先住所','Delivery Address'],['◴','注文履歴','Order History'],['♥','お気に入り',favorites.length + ' items'],['▣','支払い方法','Payment Methods'],['◎','言語設定','日本語 / မြန်မာ']].map((item) => <button key={item[1]}><span>{item[0]}</span><div><b>{item[1]}</b><small>{item[2]}</small></div><strong>›</strong></button>)}</div></div></div>}
+      {activeTab === 'mypage' && <div className='modal-layer' onMouseDown={(event) => event.currentTarget === event.target && setActiveTab('home')}><div className='profile-modal'><button className='modal-close' onClick={() => setActiveTab('home')}>×</button><div className='profile-hero'><span>G</span><div><p className='eyebrow light'>GUEST ORDER</p><h2>ゲスト注文</h2><small>登録・パスワードなしでご利用いただけます</small></div></div><div className='profile-links'>{[['◈','配達先住所','Delivery Address'],['◴','注文状況','Current Order'],['♥','お気に入り',favorites.length + ' items'],['▣','支払い方法','Payment Methods'],['◎','言語設定','日本語 / မြန်မာ']].map((item) => <button key={item[1]}><span>{item[0]}</span><div><b>{item[1]}</b><small>{item[2]}</small></div><strong>›</strong></button>)}</div></div></div>}
       {toast && <div className='toast'><span>✓</span>{toast}</div>}
     </main>
   );

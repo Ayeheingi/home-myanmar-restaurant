@@ -323,7 +323,7 @@ export default function Home() {
 
       <header className='topbar'>
         <button className='brand' onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}><span>H</span><div><strong>HOME</strong><small>MYANMAR RESTRUANT</small></div></button>
-        <div className='header-location'><span className='pin'>●</span><div><small>お届け先</small><strong>東京都 新宿区 西新宿 2-8</strong></div><span>⌄</span></div>
+        <div className='header-location'><span className='pin'>●</span><div><small>お届け先</small><strong>沖縄県 那覇市 泉崎 1-1</strong></div><span>⌄</span></div>
         <div className='header-actions'>
           <button className='language' onClick={() => setLanguage(language === 'jp' ? 'mm' : 'jp')}><span>{language === 'jp' ? 'JP' : 'MM'}</span>{language === 'jp' ? '日本語' : 'မြန်မာ'}</button>
           <button className='round' aria-label='Notifications'>♢<span className='alert-dot'/></button>
@@ -335,7 +335,7 @@ export default function Home() {
         <div className='hero-copy'>
           <p className='eyebrow'>AUTHENTIC MYANMAR FLAVORS</p>
           <h1>{language === 'jp' ? <>今日は、何を<br/><em>食べますか？</em></> : <>ဒီနေ့ ဘာစား<br/><em>ချင်ပါသလဲ?</em></>}</h1>
-          <p>{language === 'jp' ? '故郷の味を、東京のあなたの食卓へ。' : 'မြန်မာ့အရသာကို တိုကျိုမြို့က သင့်အိမ်အရောက်။'}</p>
+          <p>{language === 'jp' ? '故郷の味を、那覇のあなたの食卓へ。' : 'မြန်မာ့အရသာကို နာဟာမြို့က သင့်အိမ်အရောက်။'}</p>
           <div className='search-box'><span>⌕</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={language === 'jp' ? '料理名を検索…' : 'အစားအစာရှာရန်…'}/><button>検索</button></div>
         </div>
         <div className='hero-image'>
@@ -376,7 +376,7 @@ export default function Home() {
         <div className='promo-price'><small>FAMILY SET</small><strong>¥3,800</strong><span>通常 ¥4,600</span></div>
       </section>
 
-      <footer><div className='brand inverted'><span>H</span><div><strong>HOME</strong><small>MYANMAR RESTRUANT</small></div></div><p>東京で楽しむ、本格ミャンマー料理。</p><div><span>営業時間 11:00–22:00</span><span>¥ Japanese Yen</span></div></footer>
+      <footer><div className='brand inverted'><span>H</span><div><strong>HOME</strong><small>MYANMAR RESTRUANT</small></div></div><p>那覇で楽しむ、本格ミャンマー料理。</p><div><span>営業時間 11:00–22:00</span><span>¥ Japanese Yen</span></div></footer>
 
       <nav className='bottom-nav' aria-label='Main navigation'>
         {[['home','⌂','ホーム'],['menu','≡','メニュー'],['cart','◇','カート'],['orders','◴','注文'],['mypage','○','マイページ']].map((item) => <button key={item[0]} className={activeTab === item[0] ? 'active' : ''} onClick={() => goTab(item[0])}><span>{item[1]}{item[0] === 'cart' && cartCount > 0 && <b>{cartCount}</b>}</span><small>{item[2]}</small></button>)}
@@ -482,7 +482,7 @@ export default function Home() {
       {checkout && <div className='modal-layer'><div className='checkout-modal'><button className='modal-close' onClick={() => setCheckout(false)}>×</button>
         <div className='checkout-title'><p className='eyebrow'>CHECKOUT</p><h2>お届け情報</h2><p>အော်ဒါအချက်အလက်များ</p></div>
         <div className='checkout-grid'><div><h3>1. 受け取り方法</h3><div className='method-switch checkout-method'><button className={method === 'delivery' ? 'active' : ''} onClick={() => setMethod('delivery')}><span>◈</span><div><b>Delivery</b><small>ご指定の住所へ</small></div></button><button className={method === 'pickup' ? 'active' : ''} onClick={() => setMethod('pickup')}><span>▣</span><div><b>Pickup</b><small>お店で受け取り</small></div></button></div>
-          <h3>2. お客様情報</h3><div className='form-grid'><label><span>お名前</span><input defaultValue={loggedIn ? 'Aye Thandar' : ''} placeholder='例）アイ・タンダー'/></label><label><span>電話番号</span><input placeholder='090-1234-5678'/></label>{method === 'delivery' && <><label><span>郵便番号</span><input placeholder='160-0023'/></label><label className='full'><span>配達先住所</span><input placeholder='東京都新宿区西新宿 2-8-1'/></label></>}</div>
+          <h3>2. お客様情報</h3><div className='form-grid'><label><span>お名前</span><input defaultValue={loggedIn ? 'Aye Thandar' : ''} placeholder='例）アイ・タンダー'/></label><label><span>電話番号</span><input placeholder='090-1234-5678'/></label>{method === 'delivery' && <><label><span>郵便番号</span><input placeholder='900-0021'/></label><label className='full'><span>配達先住所</span><input placeholder='沖縄県那覇市泉崎 1-1-1'/></label></>}</div>
         </div><div className='payment-side'><h3>3. お支払い</h3>{['Credit Card','PayPay',method === 'delivery' ? 'Cash on delivery' : 'Pay at restaurant'].map((pay, i) => <label className={'payment ' + (i === 0 ? 'selected' : '')} key={pay}><input type='radio' name='payment' defaultChecked={i === 0}/><span>{i === 0 ? '▣' : i === 1 ? 'P' : '¥'}</span><b>{pay}</b></label>)}<div className='order-total'><p><span>商品合計</span><b>{yen(subtotal)}</b></p><p><span>配送料</span><b>{yen(fee)}</b></p><div><span>お支払い合計</span><strong>{yen(subtotal + fee)}</strong></div></div><button className='primary wide' onClick={() => { setCheckout(false); setTracking(true); setActiveTab('orders'); }}>{yen(subtotal + fee)}　注文を確定</button><small className='secure'>◇ 安全に暗号化されています</small></div></div>
       </div></div>}
 

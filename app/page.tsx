@@ -328,6 +328,13 @@ const foods: Food[] = [
     secondaryTitle: 'အပူချိန်ရွေးပါ / 温度を選択', defaultSecondary: 'warm',
     secondaryOptions: [{id:'warm',label:'အပူ / 温かい',price:0},{id:'cold',label:'အအေး / 冷たい',price:0}],
     toppings: [{id:'coconut-flake',label:'အုန်းသီးဖတ် / ココナッツフレーク',price:50},{id:'coconut-milk',label:'အုန်းနို့အပို / ココナッツミルク追加',price:50},{id:'jelly',label:'ကျောက်ကျော / ゼリー',price:50}] },
+  { id: 47, mm: 'မိသားစု စနေတနင်္ဂနွေ အထူးအစုံ', jp: '週末ファミリーセット', price: 3800, category: 'curry', popular: true, special: true,
+    description: 'お好きなカレー・おかずを2品選べる、ライス4人前・豆とキャベツのサラダ・ミャンマー茶（ポット）付きのお得なセット。3〜4名様向けです。',
+    image: '', optionTitle: 'セット内容 / セットサイズ', defaultOption: 'family', defaultSpice: 'not-applicable', hideSpice: true,
+    options: [{id:'family',label:'မိသားစုအစုံ / ファミリーセット（3〜4名様）',price:0}],
+    multiTitle: 'အဓိကဟင်း ၂ မျိုးရွေးပါ / カレー・おかずを2品選択', selectionLimit: {family:2},
+    multiOptions: [{id:'chicken-curry',label:'မြန်မာကြက်သားဟင်း / ミャンマー風チキンカレー'},{id:'fish-curry',label:'မြန်မာငါးဟင်း / ミャンマー風魚カレー'},{id:'liver-cauliflower',label:'အသည်းပန်းဂေါ်ဖီကြော် / レバーとカリフラワー炒め'},{id:'bitter-melon-egg',label:'ကြက်ဟင်းခါးသီးကြက်ဥကြော် / ゴーヤと卵炒め'},{id:'ngapi-platter',label:'ငပိရည်ကြိုတို့စရာဗန်း / 発酵魚ディップと野菜'},{id:'spicy-dried-fish',label:'အစပ်ငါးခြောက်ကြော် / ピリ辛干し魚炒め'}],
+    toppings: [] },
 ];
 
 const yen = (value: number) => '¥' + value.toLocaleString('ja-JP');
@@ -457,14 +464,14 @@ export default function Home() {
         {filteredFoods.length ? <div className='food-grid'>
           {filteredFoods.map((food) => <article className='food-card' key={food.id}>
             <button className={'heart ' + (favorites.includes(food.id) ? 'liked' : '')} aria-label='Favorite' onClick={() => setFavorites((list) => list.includes(food.id) ? list.filter((id) => id !== food.id) : list.concat(food.id))}>♥</button>
-            <button className='food-image' onClick={() => openFood(food)}>{food.image ? <img src={food.image} alt={food.jp}/> : <span className='food-placeholder'><b>Ⴙ</b><small>{food.mm}<br/>{food.jp}</small></span>}{food.special && <span className='special-badge'>TODAY&apos;S SPECIAL</span>}</button>
+            <button className='food-image' onClick={() => openFood(food)}>{food.image ? <img src={food.image} alt={food.jp}/> : <span className='food-placeholder'><b>Ⴙ</b><small>{food.mm}<br/>{food.jp}</small></span>}{food.special && <span className='special-badge'>{food.id === 47 ? 'FAMILY SET' : <>TODAY&apos;S SPECIAL</>}</span>}</button>
             <div className='food-info'><div className='food-title'><div><small>{food.mm}</small><h3>{food.jp}</h3></div><span className='spicy'>辛さ選択</span></div><p>{food.description}</p><div className='food-bottom'><strong>{yen(food.price)}</strong><button onClick={() => openFood(food)}>＋ 選ぶ</button></div></div>
           </article>)}
         </div> : <div className='empty-state'><span>⌕</span><h3>料理が見つかりません</h3><button onClick={() => setQuery('')}>検索をクリア</button></div>}
       </section>
 
       <section className='promo-banner'>
-        <div><p className='eyebrow light'>WEEKEND SPECIAL</p><h2>家族の食卓に、<br/>もっとミャンマーを。</h2><p>カレー2品・ライス・サラダ・ドリンクのお得なセット</p><button onClick={() => openFood(foods[2])}>セットを見る →</button></div>
+        <div><p className='eyebrow light'>WEEKEND SPECIAL</p><h2>家族の食卓に、<br/>もっとミャンマーを。</h2><p>カレー2品・ライス4人前・サラダ・ミャンマー茶のお得なセット</p><button onClick={() => { const familySet = foods.find((food) => food.id === 47); if (familySet) openFood(familySet); }}>セットを見る →</button></div>
         <div className='promo-price'><small>FAMILY SET</small><strong>¥3,800</strong><span>通常 ¥4,600</span></div>
       </section>
 
@@ -477,7 +484,7 @@ export default function Home() {
       {selected && <div className='modal-layer' onMouseDown={(event) => event.currentTarget === event.target && setSelected(null)}>
         <div className='detail-drawer'>
           <button className='modal-close' onClick={() => setSelected(null)}>×</button>
-          <div className='detail-photo'>{selected.image ? <img src={selected.image} alt={selected.jp}/> : <div className='detail-placeholder'><b>Ⴙ</b><strong>{selected.mm}</strong><small>{selected.jp}</small></div>}<span>{selected.category.toUpperCase()}</span></div>
+          <div className='detail-photo'>{selected.image ? <img src={selected.image} alt={selected.jp}/> : <div className='detail-placeholder'><b>Ⴙ</b><strong>{selected.mm}</strong><small>{selected.jp}</small></div>}<span>{selected.id === 47 ? 'FAMILY SET' : selected.category.toUpperCase()}</span></div>
           <div className='detail-content'>
             <p className='eyebrow'>FOOD DETAIL</p>
             <small className='mm-name'>{selected.mm}</small>
@@ -527,7 +534,7 @@ export default function Home() {
               </div>
             </div>}
 
-            <div className='detail-option-block'>
+            {selected.toppings.length > 0 && <div className='detail-option-block'>
               <div className='detail-option-title'><strong>Topping ထပ်ထည့်ရန်</strong><span>（任意）</span></div>
               <div className='choice-list topping-list'>
                 {selected.toppings.map((topping) => <label className={detailToppings.includes(topping.id) ? 'selected' : ''} key={topping.id}>
@@ -535,7 +542,7 @@ export default function Home() {
                   <span className='check-mark'/><b>{topping.label}</b><strong>+{yen(topping.price)}</strong>
                 </label>)}
               </div>
-            </div>
+            </div>}
 
             <label className='request-note'>
               <span><b>အထူးတောင်းဆိုချက်</b>（任意）</span>

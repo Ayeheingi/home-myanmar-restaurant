@@ -375,6 +375,7 @@ export default function Home() {
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [showCart, setShowCart] = useState(false);
   const [checkout, setCheckout] = useState(false);
+  const [checkoutReview, setCheckoutReview] = useState(false);
   const [tracking, setTracking] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [orders, setOrders] = useState<OrderRecord[]>([]);
@@ -382,8 +383,10 @@ export default function Home() {
   const [showRecommend, setShowRecommend] = useState(false);
   const [recommendType, setRecommendType] = useState<'curry' | 'noodle' | null>(null);
   const [recommendSpicy, setRecommendSpicy] = useState<boolean | null>(null);
-  const [checkoutForm, setCheckoutForm] = useState({ name:'', phone:'', address:'', timing:'asap', scheduled:'', payment:'cash', note:'' });
+  const [checkoutForm, setCheckoutForm] = useState({ name:'', phone:'', address:'', timing:'asap', scheduled:'', payment:'cash', note:'', cardNumber:'', expiry:'', cvc:'' });
   const [favorites, setFavorites] = useState<number[]>([2]);
+  const [favoritesOnly, setFavoritesOnly] = useState(false);
+  const [profilePanel, setProfilePanel] = useState<'address' | 'payment' | null>(null);
   const [toast, setToast] = useState('');
 
   useEffect(() => {
@@ -403,11 +406,11 @@ export default function Home() {
   }, [orders, cartReady]);
 
   const filteredFoods = useMemo(() => {
-    const list = category === 'popular' ? foods.filter((food) => food.popular) : foods.filter((food) => food.category === category);
+    const list = favoritesOnly ? foods.filter((food) => favorites.includes(food.id)) : category === 'popular' ? foods.filter((food) => food.popular) : foods.filter((food) => food.category === category);
     if (!query.trim()) return list;
     const q = query.toLowerCase();
     return foods.filter((food) => (food.jp + ' ' + food.mm).toLowerCase().includes(q));
-  }, [category, query]);
+  }, [category, query, favoritesOnly, favorites]);
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
   const subtotal = cart.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
   const fee = method === 'delivery' && cart.length ? 300 : 0;
@@ -481,6 +484,17 @@ export default function Home() {
     setOrders((list) => [record, ...list]);
     setCompletedOrder(record);
     setCart([]); setCheckout(false); setTracking(true); setActiveTab('orders');
+    setCheckoutReview(false);
+  };
+  const openCheckoutReview = () => {
+    if (!checkoutForm.name.trim() || !checkoutForm.phone.trim() || (method === 'delivery' && !checkoutForm.address.trim())) {
+      flash('お名前・電話番号・住所を入力してください'); return;
+    }
+    if (checkoutForm.timing === 'scheduled' && !checkoutForm.scheduled) { flash('受取時間を指定してください'); return; }
+    if (checkoutForm.payment === 'card' && (!checkoutForm.cardNumber.trim() || !checkoutForm.expiry.trim() || !checkoutForm.cvc.trim())) {
+      flash('カード情報を入力してください'); return;
+    }
+    setCheckoutReview(true);
   };
   const recommendation = useMemo(() => {
     if (!recommendType || recommendSpicy === null) return null;
@@ -494,6 +508,13 @@ export default function Home() {
       setShowHistory(true);
     }
     if (tab === 'menu') document.getElementById('menu')?.scrollIntoView();
+  };
+  const profileAction = (action: string) => {
+    if (action === 'address') setProfilePanel('address');
+    if (action === 'payment') setProfilePanel('payment');
+    if (action === 'current') { setActiveTab('home'); setShowHistory(true); }
+    if (action === 'favorites') { setFavoritesOnly(true); setCategory('popular'); setQuery(''); setActiveTab('home'); window.setTimeout(() => document.getElementById('menu')?.scrollIntoView(), 50); }
+    if (action === 'language') { setLanguage(language === 'jp' ? 'mm' : 'jp'); flash(language === 'jp' ? 'မြန်မာဘာသာသို့ ပြောင်းပြီးပါပြီ' : '日本語に切り替えました'); }
   };
 
   return (
@@ -513,7 +534,7 @@ export default function Home() {
           <p className='eyebrow'>AUTHENTIC MYANMAR FLAVORS</p>
           <h1>{language === 'jp' ? <>今日は、何を<br/><em>食べますか？</em></> : <>ဒီနေ့ ဘာစား<br/><em>ချင်ပါသလဲ?</em></>}</h1>
           <p>{language === 'jp' ? '故郷の味を、那覇のあなたの食卓へ。' : 'မြန်မာ့အရသာကို နာဟာမြို့က သင့်အိမ်အရောက်။'}</p>
-          <div className='search-box'><span>⌕</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={language === 'jp' ? '料理名を検索…' : 'အစားအစာရှာရန်…'}/><button onClick={() => document.getElementById('menu')?.scrollIntoView()}>検索</button></div>
+          <div className='search-box'><span>⌕</span><input value={query} onChange={(event) => { setQuery(event.target.value); setFavoritesOnly(false); }} placeholder={language === 'jp' ? '料理名を検索…' : 'အစားအစာရှာရန်…'}/><button onClick={() => document.getElementById('menu')?.scrollIntoView()}>検索</button></div>
           <div className='hero-actions'><button className='hero-primary' onClick={() => document.getElementById('menu')?.scrollIntoView()}>メニューを見る</button><button className='hero-secondary' onClick={() => setShowRecommend(true)}>今日のおすすめ診断</button></div>
         </div>
         <div className='hero-image'>
@@ -532,14 +553,14 @@ export default function Home() {
       </section>
 
       <section className='content-section' id='menu'>
-        <div className='section-heading'><div><p className='eyebrow'>EXPLORE OUR MENU</p><h2>{language === 'jp' ? 'カテゴリー' : 'အမျိုးအစားများ'}</h2></div><button className='view-all' onClick={() => setCategory('popular')}>すべて見る <span>→</span></button></div>
+        <div className='section-heading'><div><p className='eyebrow'>EXPLORE OUR MENU</p><h2>{language === 'jp' ? 'カテゴリー' : 'အမျိုးအစားများ'}</h2></div><button className='view-all' onClick={() => { setCategory('popular'); setFavoritesOnly(false); }}>すべて見る <span>→</span></button></div>
         <div className='categories'>
-          {categories.map((item) => <button key={item.id} onClick={() => setCategory(item.id)} className={category === item.id ? 'active' : ''}><span>{item.icon}</span><strong>{item.jp}</strong><small>{item.mm}</small></button>)}
+          {categories.map((item) => <button key={item.id} onClick={() => { setCategory(item.id); setFavoritesOnly(false); }} className={!favoritesOnly && category === item.id ? 'active' : ''}><span>{item.icon}</span><strong>{item.jp}</strong><small>{item.mm}</small></button>)}
         </div>
       </section>
 
       <section className='content-section menu-section'>
-        <div className='section-heading'><div><p className='eyebrow'>CHEF&apos;S SELECTION</p><h2>{categories.find((item) => item.id === category)?.jp}</h2></div><div className='filters'><button className='active'>おすすめ順</button><button onClick={() => flash('辛さ・価格・アレルギーで絞り込み')}>⚙ 絞り込み</button></div></div>
+        <div className='section-heading'><div><p className='eyebrow'>CHEF&apos;S SELECTION</p><h2>{favoritesOnly ? 'お気に入り' : categories.find((item) => item.id === category)?.jp}</h2></div><div className='filters'><button className='active'>おすすめ順</button><button onClick={() => flash('辛さ・価格・アレルギーで絞り込み')}>⚙ 絞り込み</button></div></div>
         {filteredFoods.length ? <div className='food-grid'>
           {filteredFoods.map((food) => <article className='food-card' key={food.id}>
             <button className={'heart ' + (favorites.includes(food.id) ? 'liked' : '')} aria-label='Favorite' onClick={() => setFavorites((list) => list.includes(food.id) ? list.filter((id) => id !== food.id) : list.concat(food.id))}>♥</button>
@@ -654,18 +675,22 @@ export default function Home() {
           </div><div className='cart-price'><button aria-label='削除' onClick={() => setCart((items) => items.filter((_, i) => i !== index))}>×</button><strong>{yen(item.unitPrice * item.quantity)}</strong></div>
         </div>)}</div>
           <label className='coupon'><span>◇</span><input placeholder='クーポンコード'/><button>適用</button></label><textarea className='notes' placeholder='お店へのメモ（任意）'/>
-          <div className='summary'><p><span>小計</span><b>{yen(subtotal)}</b></p><p><span>配送料</span><b>{fee ? yen(fee) : '無料'}</b></p><div><span>合計 <small>（税込）</small></span><strong>{yen(subtotal + fee)}</strong></div></div>
-          <button className='primary wide checkout-button' onClick={() => { setShowCart(false); setCheckout(true); }}>レジに進む <span>→</span></button></> :
+          <div className='summary'><p><span>小計</span><b>{yen(subtotal)}</b></p><p className='fee-later'><span>配送料</span><b>Checkoutで計算</b></p><div><span>商品合計 <small>（税込）</small></span><strong>{yen(subtotal)}</strong></div></div>
+          <button className='primary wide checkout-button' onClick={() => { setShowCart(false); setCheckoutReview(false); setCheckout(true); }}>レジに進む <span>→</span></button></> :
           <div className='cart-empty'><span>◇</span><h3>カートは空です</h3><p>お好きな料理を選んでください。</p><button className='primary' onClick={() => setShowCart(false)}>メニューを見る</button></div>}
       </aside></div>}
 
-      {checkout && <div className='modal-layer'><div className='checkout-modal'><button className='modal-close' onClick={() => setCheckout(false)}>×</button>
+      {checkout && <div className='modal-layer'><div className='checkout-modal'><button className='modal-close' onClick={() => { setCheckout(false); setCheckoutReview(false); }}>×</button>
         <div className='checkout-title'><p className='eyebrow'>CHECKOUT</p><h2>お届け情報</h2><p>အော်ဒါအချက်အလက်များ</p></div>
-        <div className='checkout-grid'><div><h3>1. 受け取り方法</h3><div className='method-switch checkout-method'><button className={method === 'delivery' ? 'active' : ''} onClick={() => setMethod('delivery')}><span>◈</span><div><b>Delivery</b><small>ご指定の住所へ</small></div></button><button className={method === 'pickup' ? 'active' : ''} onClick={() => setMethod('pickup')}><span>▣</span><div><b>Pickup</b><small>お店で受け取り</small></div></button></div>
+        {!checkoutReview ? <div className='checkout-grid'><div><h3>1. 受け取り方法</h3><div className='method-switch checkout-method'><button className={method === 'delivery' ? 'active' : ''} onClick={() => setMethod('delivery')}><span>◈</span><div><b>Delivery</b><small>ご指定の住所へ</small></div></button><button className={method === 'pickup' ? 'active' : ''} onClick={() => setMethod('pickup')}><span>▣</span><div><b>Pickup</b><small>お店で受け取り</small></div></button></div>
           <h3>2. お客様情報</h3><div className='form-grid'><label><span>お名前（必須）</span><input value={checkoutForm.name} onChange={(e) => setCheckoutForm({...checkoutForm,name:e.target.value})} placeholder='例）アイ・タンダー'/></label><label><span>電話番号（必須）</span><input value={checkoutForm.phone} onChange={(e) => setCheckoutForm({...checkoutForm,phone:e.target.value})} placeholder='090-1234-5678'/></label>{method === 'delivery' && <label className='full'><span>配達先住所（必須）</span><input value={checkoutForm.address} onChange={(e) => setCheckoutForm({...checkoutForm,address:e.target.value})} placeholder='沖縄県那覇市泉崎 1-1-1'/></label>}</div>
           <h3>3. 受取時間</h3><div className='timing-options'><label><input type='radio' checked={checkoutForm.timing === 'asap'} onChange={() => setCheckoutForm({...checkoutForm,timing:'asap'})}/>できるだけ早く</label><label><input type='radio' checked={checkoutForm.timing === 'scheduled'} onChange={() => setCheckoutForm({...checkoutForm,timing:'scheduled'})}/>時間指定</label>{checkoutForm.timing === 'scheduled' && <input type='datetime-local' value={checkoutForm.scheduled} onChange={(e) => setCheckoutForm({...checkoutForm,scheduled:e.target.value})}/>}</div>
           <label className='checkout-note'><span>備考欄（任意）</span><textarea value={checkoutForm.note} onChange={(e) => setCheckoutForm({...checkoutForm,note:e.target.value})} placeholder='アレルギーや受け取りについてのご要望'/></label>
-        </div><div className='payment-side'><h3>4. お支払い</h3>{[{id:'cash',label:'現金',icon:'¥'},{id:'card',label:'カード',icon:'▣'},{id:'paypay',label:'PayPay',icon:'P'}].map((pay) => <label className={'payment ' + (checkoutForm.payment === pay.id ? 'selected' : '')} key={pay.id}><input type='radio' name='payment' checked={checkoutForm.payment === pay.id} onChange={() => setCheckoutForm({...checkoutForm,payment:pay.id})}/><span>{pay.icon}</span><b>{pay.label}</b></label>)}<div className='order-total'><p><span>商品合計</span><b>{yen(subtotal)}</b></p><p><span>配送料</span><b>{fee ? yen(fee) : '無料'}</b></p><div><span>お支払い合計</span><strong>{yen(subtotal + fee)}</strong></div></div><button className='primary wide' onClick={placeOrder}>{yen(subtotal + fee)}　注文を確定</button><small className='secure'>ゲスト注文・登録不要</small></div></div>
+        </div><div className='payment-side'><h3>4. お支払い</h3>{[{id:'cash',label:'現金',icon:'¥'},{id:'card',label:'カード',icon:'▣'},{id:'paypay',label:'PayPay',icon:'P'}].map((pay) => <label className={'payment ' + (checkoutForm.payment === pay.id ? 'selected' : '')} key={pay.id}><input type='radio' name='payment' checked={checkoutForm.payment === pay.id} onChange={() => setCheckoutForm({...checkoutForm,payment:pay.id})}/><span>{pay.icon}</span><b>{pay.label}</b></label>)}
+          {checkoutForm.payment === 'card' && <div className='payment-fields'><label><span>カード番号（必須）</span><input inputMode='numeric' value={checkoutForm.cardNumber} onChange={(e) => setCheckoutForm({...checkoutForm,cardNumber:e.target.value})} placeholder='1234 5678 9012 3456'/></label><div><label><span>有効期限</span><input value={checkoutForm.expiry} onChange={(e) => setCheckoutForm({...checkoutForm,expiry:e.target.value})} placeholder='MM/YY'/></label><label><span>CVC</span><input inputMode='numeric' value={checkoutForm.cvc} onChange={(e) => setCheckoutForm({...checkoutForm,cvc:e.target.value})} placeholder='123'/></label></div></div>}
+          {checkoutForm.payment === 'paypay' && <p className='payment-help'>注文内容を確認した後、PayPayでのお支払い案内を表示します。</p>}
+          <div className='order-total'><p><span>商品合計</span><b>{yen(subtotal)}</b></p><p><span>配送料</span><b>{method === 'delivery' ? yen(fee) : '無料'}</b></p><div><span>お支払い合計</span><strong>{yen(subtotal + fee)}</strong></div></div><button className='primary wide' onClick={openCheckoutReview}>{yen(subtotal + fee)}　注文内容を確認</button><small className='secure'>このボタンではまだ注文は確定しません</small></div></div> :
+          <div className='checkout-review'><p className='eyebrow'>FINAL REVIEW</p><h2>注文内容の最終確認</h2><p>内容をご確認のうえ、注文を確定してください。</p><div className='review-summary'><section><h3>ご注文</h3><div className='review-items'>{cart.map((item, index) => <p key={item.id + '-review-' + index}><span>{item.jp} × {item.quantity}</span><b>{yen(item.unitPrice * item.quantity)}</b></p>)}</div><p><span>商品合計</span><b>{yen(subtotal)}</b></p><p><span>配送料</span><b>{method === 'delivery' ? yen(fee) : '無料'}</b></p><div><span>お支払い合計</span><strong>{yen(subtotal + fee)}</strong></div></section><section><h3>受け取り情報</h3><p><span>方法</span><b>{method === 'delivery' ? 'Delivery（配達）' : 'Pickup（店頭受取）'}</b></p>{method === 'delivery' && <p><span>住所</span><b>{checkoutForm.address}</b></p>}<p><span>お名前</span><b>{checkoutForm.name}</b></p><p><span>電話番号</span><b>{checkoutForm.phone}</b></p><p><span>受取時間</span><b>{checkoutForm.timing === 'asap' ? 'できるだけ早く' : checkoutForm.scheduled}</b></p><p><span>支払い</span><b>{checkoutForm.payment === 'cash' ? '現金' : checkoutForm.payment === 'card' ? 'カード' : 'PayPay'}</b></p>{checkoutForm.note && <p><span>備考</span><b>{checkoutForm.note}</b></p>}</section></div><div className='review-actions'><button className='secondary' onClick={() => setCheckoutReview(false)}>戻って修正</button><button className='primary' onClick={placeOrder}>{yen(subtotal + fee)}　この内容で注文する</button></div></div>}
       </div></div>}
 
       {tracking && completedOrder && <div className='modal-layer'><div className='tracking-card'><button className='modal-close' onClick={() => setTracking(false)}>×</button><div className='success-icon'>✓</div><p className='eyebrow'>ORDER #{completedOrder.id}</p><h2>注文が完了しました</h2><p>အော်ဒါတင်ပြီးပါပြီ · ご注文ありがとうございます</p><div className='eta'><small>{completedOrder.method === 'delivery' ? 'DELIVERY TIME' : 'PICKUP TIME'}</small><strong>{completedOrder.receiveTime}</strong></div><div className='complete-items'>{completedOrder.items.map((item,index) => <p key={item.id + '-' + index}><span>{item.jp} × {item.quantity}</span><b>{yen(item.unitPrice * item.quantity)}</b></p>)}</div><div className='complete-total'><span>合計</span><strong>{yen(completedOrder.total)}</strong></div><small className='order-date'>{completedOrder.createdAt}</small><button className='secondary wide' onClick={() => setTracking(false)}>ホームに戻る</button></div></div>}
@@ -674,7 +699,7 @@ export default function Home() {
 
       {showHistory && <div className='modal-layer'><div className='history-card'><button className='modal-close' onClick={() => setShowHistory(false)}>×</button><p className='eyebrow'>ORDER HISTORY</p><h2>注文履歴</h2>{orders.length ? <div className='history-list'>{orders.map((order) => <button key={order.id} onClick={() => { setCompletedOrder(order); setShowHistory(false); setTracking(true); }}><div><strong>#{order.id}</strong><small>{order.createdAt} · {order.method === 'delivery' ? '配達' : '店頭受取'}</small></div><b>{yen(order.total)}</b><span>›</span></button>)}</div> : <div className='history-empty'><span>◴</span><p>注文履歴はまだありません。</p></div>}</div></div>}
 
-      {activeTab === 'mypage' && <div className='modal-layer' onMouseDown={(event) => event.currentTarget === event.target && setActiveTab('home')}><div className='profile-modal'><button className='modal-close' onClick={() => setActiveTab('home')}>×</button><div className='profile-hero'><span>G</span><div><p className='eyebrow light'>GUEST ORDER</p><h2>ゲスト注文</h2><small>登録・パスワードなしでご利用いただけます</small></div></div><div className='profile-links'>{[['◈','配達先住所','Delivery Address'],['◴','注文状況','Current Order'],['♥','お気に入り',favorites.length + ' items'],['▣','支払い方法','Payment Methods'],['◎','言語設定','日本語 / မြန်မာ']].map((item) => <button key={item[1]}><span>{item[0]}</span><div><b>{item[1]}</b><small>{item[2]}</small></div><strong>›</strong></button>)}</div></div></div>}
+      {activeTab === 'mypage' && <div className='modal-layer' onMouseDown={(event) => { if (event.currentTarget === event.target) { setActiveTab('home'); setProfilePanel(null); } }}><div className='profile-modal'><button className='modal-close' onClick={() => { setActiveTab('home'); setProfilePanel(null); }}>×</button><div className='profile-hero'><span>G</span><div><p className='eyebrow light'>GUEST ORDER</p><h2>ゲスト注文</h2><small>登録・パスワードなしでご利用いただけます</small></div></div>{!profilePanel ? <div className='profile-links'><button onClick={() => profileAction('address')}><span>◈</span><div><b>配達先住所</b><small>{checkoutForm.address || 'Delivery Address'}</small></div><strong>›</strong></button><button onClick={() => profileAction('current')}><span>◴</span><div><b>注文状況</b><small>{orders.length ? 'Current Order' : '注文はまだありません'}</small></div><strong>›</strong></button><button onClick={() => profileAction('favorites')}><span>♥</span><div><b>お気に入り</b><small>{favorites.length} items</small></div><strong>›</strong></button><button onClick={() => profileAction('payment')}><span>▣</span><div><b>支払い方法</b><small>{checkoutForm.payment === 'cash' ? '現金' : checkoutForm.payment === 'card' ? 'カード' : 'PayPay'}</small></div><strong>›</strong></button><button onClick={() => profileAction('language')}><span>◎</span><div><b>言語設定</b><small>日本語 / မြန်မာ</small></div><strong>›</strong></button></div> : <div className='profile-panel'><button className='profile-back' onClick={() => setProfilePanel(null)}>‹ 注文情報に戻る</button>{profilePanel === 'address' ? <><h3>配達先住所</h3><label className='profile-field'><span>住所</span><input value={checkoutForm.address} onChange={(e) => setCheckoutForm({...checkoutForm,address:e.target.value})} placeholder='沖縄県那覇市泉崎 1-1-1'/></label><button className='primary wide' onClick={() => { setProfilePanel(null); flash('配達先住所を保存しました'); }}>住所を保存</button></> : <><h3>支払い方法</h3><div className='profile-payment'>{[{id:'cash',label:'現金'},{id:'card',label:'カード'},{id:'paypay',label:'PayPay'}].map((pay) => <label key={pay.id}><input type='radio' checked={checkoutForm.payment === pay.id} onChange={() => setCheckoutForm({...checkoutForm,payment:pay.id})}/><span>{pay.label}</span></label>)}</div><button className='primary wide' onClick={() => { setProfilePanel(null); flash('支払い方法を保存しました'); }}>支払い方法を保存</button></>}</div>}</div></div>}
       {toast && <div className='toast'><span>✓</span>{toast}</div>}
     </main>
   );

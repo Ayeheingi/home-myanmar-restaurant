@@ -150,7 +150,7 @@ export default function StaffPage() {
   if (!authReady) return <main className='staff-login-shell'><div className='staff-login-card'><p>Loading…</p></div></main>;
   if (!session) return <main className='staff-login-shell'><form className='staff-login-card' onSubmit={login}>
     <a className='staff-login-brand' href={customerSitePath}><span>H</span><div><strong>အိမ်လွမ်းပြေ</strong><small>MYANMAR RESTAURANT</small></div></a>
-    <p className='login-eyebrow'>STORE CONTROL · DEMO</p><h1>店舗スタッフログイン</h1><p className='login-sub'>ဆိုင်ဝန်ထမ်း အကောင့်ဖြင့် ဝင်ရောက်ပါ<br/>店舗から発行された Staff・Manager・Owner アカウントをご利用ください。<br/>※ 静的デモ認証です。本番環境ではサーバー認証が必要です。</p>
+    <p className='login-eyebrow'>ROLE-BASED DEMO MANAGEMENT</p><h1>店舗スタッフログイン</h1><p className='login-sub'>ဆိုင်ဝန်ထမ်း အကောင့်ဖြင့် ဝင်ရောက်ပါ<br/>店舗から発行された Staff・Manager・Owner アカウントをご利用ください。<br/>Role-based demo management screen / 権限別デモ管理画面<br/>※ 静的デモ認証です。本番環境ではサーバー認証が必要です。</p>
     <label><span>メールアドレス / Gmail</span><input type='email' autoComplete='username' value={loginEmail} onChange={(event) => setLoginEmail(event.target.value)} placeholder='staff01@home-myanmar.jp' required/></label>
     <label><span>パスワード</span><input type='password' autoComplete='current-password' value={loginPassword} onChange={(event) => setLoginPassword(event.target.value)} required/></label>
     {loginError && <p className='login-error'>{loginError}</p>}
@@ -159,7 +159,7 @@ export default function StaffPage() {
 
   return <main className='staff-app'>
     <aside className='staff-sidebar'>
-      <a className='staff-brand' href={customerSitePath}><span>H</span><div><strong>အိမ်လွမ်းပြေ</strong><small>STORE CONTROL</small></div></a>
+      <a className='staff-brand' href={customerSitePath}><span>H</span><div><strong>အိမ်လွမ်းပြေ</strong><small>ROLE-BASED DEMO</small></div></a>
       <nav>{nav.filter((item) => allowedTabs.includes(item.id)).map((item) => <button key={item.id} className={tab === item.id ? 'active' : ''} onClick={() => setTab(item.id)}><span>{item.icon}</span>{item.label}</button>)}</nav>
       <div className='sidebar-bottom'><a href={customerSitePath}>← お客様サイトへ戻る</a><small>HOME MYANMAR RESTAURANT<br/>那覇店</small></div>
     </aside>

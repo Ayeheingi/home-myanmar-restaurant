@@ -2,6 +2,9 @@
 
 import { useEffect, useMemo, useState } from 'react';
 
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
+const sitePath = (path: string) => `${basePath}${path}`;
+
 type Food = {
   id: number; mm: string; jp: string; description: string; price: number;
   category: string; image: string; popular?: boolean; special?: boolean;
@@ -47,7 +50,7 @@ const spiceOptions = [
   { id: 'hot', label: 'အစပ် / 辛口' },
 ];
 
-const foods: Food[] = [
+const foods: Food[] = ([
   { id: 1, mm: 'မုန့်ဟင်းခါး', jp: 'モヒンガー', price: 850, category: 'noodle', popular: true,
     description: 'レモングラスが香る魚だしの米麺スープ。ミャンマーの国民的な朝ごはんです。',
     image: '/mohinga.png',
@@ -340,7 +343,10 @@ const foods: Food[] = [
     multiTitle: 'အဓိကဟင်း ၂ မျိုးရွေးပါ / カレー・おかずを2品選択', selectionLimit: {family:2},
     multiOptions: [{id:'chicken-curry',label:'မြန်မာကြက်သားဟင်း / ミャンマー風チキンカレー'},{id:'fish-curry',label:'မြန်မာငါးဟင်း / ミャンマー風魚カレー'},{id:'liver-cauliflower',label:'အသည်းပန်းဂေါ်ဖီကြော် / レバーとカリフラワー炒め'},{id:'bitter-melon-egg',label:'ကြက်ဟင်းခါးသီးကြက်ဥကြော် / ゴーヤと卵炒め'},{id:'ngapi-platter',label:'ငပိရည်ကြိုတို့စရာဗန်း / 発酵魚ディップと野菜'},{id:'spicy-dried-fish',label:'အစပ်ငါးခြောက်ကြော် / ピリ辛干し魚炒め'}],
     toppings: [] },
-];
+] as Food[]).map((food) => ({
+  ...food,
+  image: food.image ? sitePath(food.image) : '',
+}));
 
 const yen = (value: number) => '¥' + value.toLocaleString('ja-JP');
 const vegetarianIds = new Set([13,18,20,21,23,30,31,32,33,34,35,37,39,40]);
@@ -575,7 +581,7 @@ export default function Home() {
         <div className='promo-price'><small>FAMILY SET</small><strong>¥3,800</strong><span>通常 ¥4,600</span></div>
       </section>
 
-      <footer><div className='brand inverted'><span>H</span><div><strong>အိမ်လွမ်းပြေ</strong><small>MYANMAR RESTRUANT</small><span className='brand-tagline'>那覇で楽しむ、本格ミャンマー料理。</span></div></div><div><span>営業時間 11:00–22:00</span><a href='mailto:home@gmail.com'>home@gmail.com</a><a href='tel:09012340000'>090-1234-0000</a><a href='/staff'>スタッフ・店舗管理</a></div></footer>
+      <footer><div className='brand inverted'><span>H</span><div><strong>အိမ်လွမ်းပြေ</strong><small>MYANMAR RESTRUANT</small><span className='brand-tagline'>那覇で楽しむ、本格ミャンマー料理。</span></div></div><div><span>営業時間 11:00–22:00</span><a href='mailto:home@gmail.com'>home@gmail.com</a><a href='tel:09012340000'>090-1234-0000</a><a href={sitePath('/staff/')}>スタッフ・店舗管理</a></div></footer>
 
       <nav className='bottom-nav' aria-label='Main navigation'>
         {[['home','⌂','ホーム'],['menu','≡','メニュー'],['cart','◇','カート'],['orders','◴','注文'],['mypage','○','注文情報']].map((item) => <button key={item[0]} className={activeTab === item[0] ? 'active' : ''} onClick={() => goTab(item[0])}><span>{item[1]}{item[0] === 'cart' && cartCount > 0 && <b>{cartCount}</b>}</span><small>{item[2]}</small></button>)}

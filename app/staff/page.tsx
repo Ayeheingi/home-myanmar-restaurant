@@ -2,6 +2,9 @@
 
 import { useEffect, useMemo, useState } from 'react';
 
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
+const customerSitePath = `${basePath}/`;
+
 type Role = 'staff' | 'manager' | 'owner';
 type Tab = 'orders' | 'staffshop' | 'inventory' | 'recipes' | 'purchases' | 'sales' | 'team';
 type OrderStatus = '受付' | '調理中' | '受取待ち' | '完了';
@@ -77,9 +80,9 @@ export default function StaffPage() {
 
   return <main className='staff-app'>
     <aside className='staff-sidebar'>
-      <a className='staff-brand' href='/'><span>H</span><div><strong>အိမ်လွမ်းပြေ</strong><small>STORE CONTROL</small></div></a>
+      <a className='staff-brand' href={customerSitePath}><span>H</span><div><strong>အိမ်လွမ်းပြေ</strong><small>STORE CONTROL</small></div></a>
       <nav>{nav.filter((item) => allowedTabs.includes(item.id)).map((item) => <button key={item.id} className={tab === item.id ? 'active' : ''} onClick={() => setTab(item.id)}><span>{item.icon}</span>{item.label}</button>)}</nav>
-      <div className='sidebar-bottom'><a href='/'>← お客様サイトへ戻る</a><small>HOME MYANMAR RESTAURANT<br/>那覇店</small></div>
+      <div className='sidebar-bottom'><a href={customerSitePath}>← お客様サイトへ戻る</a><small>HOME MYANMAR RESTAURANT<br/>那覇店</small></div>
     </aside>
     <section className='staff-main'>
       <header className='staff-top'><div><p>STORE MANAGEMENT</p><h1>{nav.find((item) => item.id === tab)?.label}</h1></div><div className='role-switch'><span>表示権限</span><select value={role} onChange={(e) => setRoleSafe(e.target.value as Role)}>{roles.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select><b className={'role-badge ' + role}>{role.toUpperCase()}</b></div></header>

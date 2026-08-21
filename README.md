@@ -1,7 +1,7 @@
 # Home Myanmar Restaurant
 
 那覇のミャンマー料理店「အိမ်လွမ်းပြေ」の注文・配達Webアプリです。
-一般的なNext.js App Router構成で、ViteやCloudflare専用ランタイムを使わずに動作します。
+一般的なNext.js App Router構成のWebアプリです。
 
 ## Prerequisites
 
@@ -31,3 +31,8 @@ npm run dev
 - `/staff` — 店舗スタッフ向け管理画面
 
 カートと注文履歴はブラウザーのlocalStorageに保存されます。
+
+## GitHub Pages
+
+`main`ブランチへ変更を反映すると、GitHub Actionsが静的サイトを作成してGitHub Pagesへ公開します。
+リポジトリの **Settings → Pages → Build and deployment** で、Sourceを **GitHub Actions** に設定してください。

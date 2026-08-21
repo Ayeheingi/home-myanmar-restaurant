@@ -7,8 +7,10 @@ const customerSitePath = `${basePath}/`;
 
 type Role = 'staff' | 'manager' | 'owner';
 type Tab = 'orders' | 'staffshop' | 'inventory' | 'recipes' | 'purchases' | 'sales' | 'team';
-type OrderStatus = '受付' | '調理中' | '受取待ち' | '完了';
+type OrderStatus = '受付' | '調理中' | '配達中' | '受取待ち' | '完了';
 type StaffSession = { email: string; name: string; role: Role };
+type DashboardOrder = { id:string; time:string; type:'Pickup'|'Delivery'; customer:string; items:string; total:number; status:OrderStatus; synced?:boolean };
+type StoredOrder = { id:string; createdAt:string; method:'delivery'|'pickup'; total:number; status?:OrderStatus; customer?:{name?:string}; items:{jp:string;quantity:number}[] };
 
 const roles: { id: Role; label: string; sub: string }[] = [
   { id: 'staff', label: 'Staff', sub: '注文・従業員購入' },
@@ -28,7 +30,7 @@ const hashCredential = async (email: string, password: string) => {
   return Array.from(new Uint8Array(digest)).map((byte) => byte.toString(16).padStart(2, '0')).join('');
 };
 
-const initialOrders = [
+const initialOrders: DashboardOrder[] = [
   { id: 'HM-362086', time: '13:42', type: 'Pickup', customer: 'ゲスト', items: 'モヒンガー ×1、ミルクティー ×1', total: 1750, status: '受付' as OrderStatus },
   { id: 'HM-362041', time: '13:31', type: 'Delivery', customer: 'Aye Thandar', items: 'チキンダンバウ ×2', total: 2500, status: '調理中' as OrderStatus },
   { id: 'HM-361998', time: '13:18', type: 'Pickup', customer: 'ゲスト', items: 'シャンヌードル ×1', total: 900, status: '受取待ち' as OrderStatus },
@@ -88,6 +90,20 @@ export default function StaffPage() {
     setAuthReady(true);
   }, []);
   useEffect(() => {
+    const syncCustomerOrders = () => {
+      try {
+        const stored = JSON.parse(localStorage.getItem('home-myanmar-orders') || '[]') as StoredOrder[];
+        const mapped: DashboardOrder[] = stored.map((order) => ({ id:order.id, time:new Date(order.createdAt).toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'}), type:order.method === 'delivery' ? 'Delivery' : 'Pickup', customer:order.customer?.name || 'ゲスト', items:order.items.map((item) => `${item.jp} ×${item.quantity}`).join('、'), total:order.total, status:order.status || '受付', synced:true }));
+        setOrders((current) => [...mapped, ...initialOrders.filter((demo) => !mapped.some((item) => item.id === demo.id)).map((demo) => current.find((item) => item.id === demo.id) || demo)]);
+      } catch { /* keep demo orders */ }
+    };
+    syncCustomerOrders();
+    const onStorage = (event: StorageEvent) => { if (event.key === 'home-myanmar-orders') syncCustomerOrders(); };
+    window.addEventListener('storage', onStorage);
+    const timer = window.setInterval(syncCustomerOrders, 2000);
+    return () => { window.removeEventListener('storage', onStorage); window.clearInterval(timer); };
+  }, []);
+  useEffect(() => {
     const saved = localStorage.getItem('home-myanmar-inventory');
     if (saved) try { setInventory(JSON.parse(saved)); } catch { /* keep defaults */ }
   }, []);
@@ -110,7 +126,15 @@ export default function StaffPage() {
     sessionStorage.removeItem('home-myanmar-staff-session');
     setSession(null); setRole('staff'); setTab('orders'); setLoginPassword('');
   };
-  const nextStatus = (status: OrderStatus): OrderStatus => status === '受付' ? '調理中' : status === '調理中' ? '受取待ち' : status === '受取待ち' ? '完了' : '完了';
+  const nextStatus = (status: OrderStatus, type: DashboardOrder['type']): OrderStatus => status === '受付' ? '調理中' : status === '調理中' ? (type === 'Delivery' ? '配達中' : '受取待ち') : status === '配達中' || status === '受取待ち' ? '完了' : '完了';
+  const advanceOrder = (order: DashboardOrder) => {
+    const status = nextStatus(order.status, order.type);
+    setOrders((list) => list.map((item) => item.id === order.id ? {...item,status} : item));
+    if (order.synced) try {
+      const stored = JSON.parse(localStorage.getItem('home-myanmar-orders') || '[]') as StoredOrder[];
+      localStorage.setItem('home-myanmar-orders', JSON.stringify(stored.map((item) => item.id === order.id ? {...item,status} : item)));
+    } catch { flash('注文状態を保存できませんでした'); }
+  };
   const staffSubtotal = staffMenu.reduce((sum, item) => sum + item.price * (staffCart[item.id] || 0), 0);
   const staffDiscount = Math.round(staffSubtotal * .3);
   const visibleInventory = stockOnly ? inventory.filter((item) => item.stock < item.par) : inventory;
@@ -126,7 +150,7 @@ export default function StaffPage() {
   if (!authReady) return <main className='staff-login-shell'><div className='staff-login-card'><p>Loading…</p></div></main>;
   if (!session) return <main className='staff-login-shell'><form className='staff-login-card' onSubmit={login}>
     <a className='staff-login-brand' href={customerSitePath}><span>H</span><div><strong>အိမ်လွမ်းပြေ</strong><small>MYANMAR RESTAURANT</small></div></a>
-    <p className='login-eyebrow'>STORE CONTROL</p><h1>店舗スタッフログイン</h1><p className='login-sub'>ဆိုင်ဝန်ထမ်း အကောင့်ဖြင့် ဝင်ရောက်ပါ<br/>店舗から発行された Staff・Manager・Owner アカウントをご利用ください。</p>
+    <p className='login-eyebrow'>ROLE-BASED DEMO MANAGEMENT</p><h1>店舗スタッフログイン</h1><p className='login-sub'>ဆိုင်ဝန်ထမ်း အကောင့်ဖြင့် ဝင်ရောက်ပါ<br/>店舗から発行された Staff・Manager・Owner アカウントをご利用ください。<br/>Role-based demo management screen / 権限別デモ管理画面<br/>※ 静的デモ認証です。本番環境ではサーバー認証が必要です。</p>
     <label><span>メールアドレス / Gmail</span><input type='email' autoComplete='username' value={loginEmail} onChange={(event) => setLoginEmail(event.target.value)} placeholder='staff01@home-myanmar.jp' required/></label>
     <label><span>パスワード</span><input type='password' autoComplete='current-password' value={loginPassword} onChange={(event) => setLoginPassword(event.target.value)} required/></label>
     {loginError && <p className='login-error'>{loginError}</p>}
@@ -135,14 +159,14 @@ export default function StaffPage() {
 
   return <main className='staff-app'>
     <aside className='staff-sidebar'>
-      <a className='staff-brand' href={customerSitePath}><span>H</span><div><strong>အိမ်လွမ်းပြေ</strong><small>STORE CONTROL</small></div></a>
+      <a className='staff-brand' href={customerSitePath}><span>H</span><div><strong>အိမ်လွမ်းပြေ</strong><small>ROLE-BASED DEMO</small></div></a>
       <nav>{nav.filter((item) => allowedTabs.includes(item.id)).map((item) => <button key={item.id} className={tab === item.id ? 'active' : ''} onClick={() => setTab(item.id)}><span>{item.icon}</span>{item.label}</button>)}</nav>
       <div className='sidebar-bottom'><a href={customerSitePath}>← お客様サイトへ戻る</a><small>HOME MYANMAR RESTAURANT<br/>那覇店</small></div>
     </aside>
     <section className='staff-main'>
-      <header className='staff-top'><div><p>STORE MANAGEMENT</p><h1>{nav.find((item) => item.id === tab)?.label}</h1></div><div className='role-switch'><div className='signed-account'><strong>{session.name}</strong><small>{session.email}</small></div><b className={'role-badge ' + role}>{roles.find((item) => item.id === role)?.label}</b><button className='staff-logout' onClick={logout}>ログアウト</button></div></header>
+      <header className='staff-top'><div><p>STORE MANAGEMENT · DEMO</p><h1>{nav.find((item) => item.id === tab)?.label}</h1></div><div className='role-switch'><div className='signed-account'><strong>{session.name}</strong><small>{session.email}</small></div><b className={'role-badge ' + role}>{roles.find((item) => item.id === role)?.label}</b><button className='staff-logout' onClick={logout}>ログアウト</button></div></header>
 
-      {tab === 'orders' && <div className='staff-content'><div className='metric-grid'><article><small>新規注文</small><strong>3</strong><span>対応が必要</span></article><article><small>調理中</small><strong>1</strong><span>平均 18分</span></article><article><small>本日の注文</small><strong>47</strong><span>+12% 昨日比</span></article><article><small>本日売上</small><strong>¥58,450</strong><span>目標の78%</span></article></div><div className='panel'><div className='panel-head'><div><h2>ライブ注文</h2><p>受付から受け渡しまで一つの画面で管理</p></div><button onClick={() => flash('最新の注文に更新しました')}>↻ 更新</button></div><div className='order-table'>{orders.map((order) => <article key={order.id}><div><b>#{order.id}</b><small>{order.time} · {order.type}</small></div><div><b>{order.customer}</b><small>{order.items}</small></div><strong>{yen(order.total)}</strong><span className={'status status-' + order.status}>{order.status}</span>{order.status !== '完了' ? <button className='advance' onClick={() => setOrders((list) => list.map((item) => item.id === order.id ? { ...item, status: nextStatus(item.status) } : item))}>{nextStatus(order.status)}へ →</button> : <button className='done' disabled>完了済み</button>}</article>)}</div></div></div>}
+      {tab === 'orders' && <div className='staff-content'><div className='metric-grid'><article><small>新規注文</small><strong>{orders.filter((order) => order.status === '受付').length}</strong><span>対応が必要</span></article><article><small>調理中</small><strong>{orders.filter((order) => order.status === '調理中').length}</strong><span>平均 18分</span></article><article><small>本日の注文</small><strong>{orders.length}</strong><span>端末内デモ連携</span></article><article><small>注文合計</small><strong>{yen(orders.reduce((sum,order) => sum + order.total,0))}</strong><span>デモ注文を含む</span></article></div><div className='panel'><div className='panel-head'><div><h2>ライブ注文</h2><p>お客様注文と同じブラウザーのlocalStorageで連携（デモ）</p></div><button onClick={() => flash('最新の注文に更新しました')}>↻ 更新</button></div><div className='order-table'>{orders.map((order) => <article key={order.id}><div><b>#{order.id}</b><small>{order.time} · {order.type}{order.synced ? ' · CUSTOMER' : ' · DEMO'}</small></div><div><b>{order.customer}</b><small>{order.items}</small></div><strong>{yen(order.total)}</strong><span className={'status status-' + order.status}>{order.status}</span>{order.status !== '完了' ? <button className='advance' onClick={() => advanceOrder(order)}>{nextStatus(order.status, order.type)}へ →</button> : <button className='done' disabled>完了済み</button>}</article>)}</div></div></div>}
 
       {tab === 'staffshop' && <div className='staff-content staff-shop'><div className='discount-hero'><div><p>STAFF BENEFIT</p><h2>スタッフはいつでも30%OFF</h2><span>勤務日の本人購入に適用・転売不可</span></div><strong>30<span>%</span><small>OFF</small></strong></div><div className='shop-grid'><div className='panel'><div className='panel-head'><div><h2>スタッフメニュー</h2><p>数量を選んで従業員価格で購入できます</p></div></div><div className='staff-menu'>{staffMenu.map((item) => <article key={item.id}><div><b>{item.name}</b><small><s>{yen(item.price)}</s> <strong>{yen(Math.round(item.price * .7))}</strong></small></div><div><button onClick={() => setStaffCart((cart) => ({...cart,[item.id]:Math.max(0,(cart[item.id] || 0)-1)}))}>−</button><span>{staffCart[item.id] || 0}</span><button onClick={() => setStaffCart((cart) => ({...cart,[item.id]:(cart[item.id] || 0)+1}))}>＋</button></div></article>)}</div></div><aside className='staff-checkout'><h3>従業員購入</h3><p><span>通常価格</span><b>{yen(staffSubtotal)}</b></p><p className='discount'><span>スタッフ割引（30%）</span><b>−{yen(staffDiscount)}</b></p><div><span>お支払い</span><strong>{yen(staffSubtotal - staffDiscount)}</strong></div><label>支払方法<select><option>給与控除</option><option>現金</option><option>PayPay</option></select></label><button disabled={!staffSubtotal} onClick={() => { setStaffCart({}); flash('スタッフ購入を記録しました'); }}>30%OFFで購入を確定</button><small>購入者：現在のStaffアカウント</small></aside></div></div>}
 

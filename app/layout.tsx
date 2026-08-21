@@ -1,8 +1,6 @@
 import type { Metadata } from 'next';
-import { Geist } from 'next/font/google';
+import type { ReactNode } from 'react';
 import './globals.css';
-
-const geist = Geist({ variable: '--font-geist', subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'အိမ်လွမ်းပြေ',
@@ -10,6 +8,6 @@ export const metadata: Metadata = {
   icons: { icon: '/favicon.svg', shortcut: '/favicon.svg' },
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang='ja'><body className={geist.variable}>{children}</body></html>;
+export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
+  return <html lang='ja'><body>{children}</body></html>;
 }

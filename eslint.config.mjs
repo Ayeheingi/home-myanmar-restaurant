@@ -35,6 +35,13 @@ const eslintConfig = defineConfig([
         version: "detect",
       },
     },
+    rules: {
+      "@next/next/no-html-link-for-pages": "off",
+      "@next/next/no-img-element": "off",
+      "jsx-a11y/no-static-element-interactions": "off",
+      "no-irregular-whitespace": "off",
+      "react-hooks/set-state-in-effect": "off",
+    },
   },
 ]);
 

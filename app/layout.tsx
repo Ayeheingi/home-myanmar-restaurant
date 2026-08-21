@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import './globals.css';
+import './enhancements.css';
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
 const customerSitePath = `${basePath}/`;
@@ -8,12 +8,25 @@ const customerSitePath = `${basePath}/`;
 type Role = 'staff' | 'manager' | 'owner';
 type Tab = 'orders' | 'staffshop' | 'inventory' | 'recipes' | 'purchases' | 'sales' | 'team';
 type OrderStatus = '受付' | '調理中' | '受取待ち' | '完了';
+type StaffSession = { email: string; name: string; role: Role };
 
 const roles: { id: Role; label: string; sub: string }[] = [
   { id: 'staff', label: 'Staff', sub: '注文・従業員購入' },
   { id: 'manager', label: 'Manager', sub: '店舗運営・在庫管理' },
   { id: 'owner', label: 'Owner', sub: '売上・権限・全機能' },
 ];
+
+const staffAccounts = [
+  { email:'staff01@home-myanmar.jp', name:'Moe Moe', role:'staff' as Role, credentialHash:'c403fe2d5d4891e5fdedf37fcb0fe047f10a853873e353c16d0c80c9b6809108' },
+  { email:'manager@home-myanmar.jp', name:'Aye Thandar', role:'manager' as Role, credentialHash:'4cb6013bede0e46bb4b2dba1cbfe59d298356cae01ff330dfbb1099cd6ef0f85' },
+  { email:'owner@home-myanmar.jp', name:'Aye Theingi', role:'owner' as Role, credentialHash:'736b3fa591aad71d0b0837341bcd445ec4a7d0f8b830ffe32dc8a36e3408c8a8' },
+];
+
+const hashCredential = async (email: string, password: string) => {
+  const bytes = new TextEncoder().encode(`${email.trim().toLowerCase()}:${password}`);
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  return Array.from(new Uint8Array(digest)).map((byte) => byte.toString(16).padStart(2, '0')).join('');
+};
 
 const initialOrders = [
   { id: 'HM-362086', time: '13:42', type: 'Pickup', customer: 'ゲスト', items: 'モヒンガー ×1、ミルクティー ×1', total: 1750, status: '受付' as OrderStatus },
@@ -49,6 +62,11 @@ const yen = (value: number) => `¥${value.toLocaleString('ja-JP')}`;
 
 export default function StaffPage() {
   const [role, setRole] = useState<Role>('staff');
+  const [session, setSession] = useState<StaffSession | null>(null);
+  const [authReady, setAuthReady] = useState(false);
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [loginError, setLoginError] = useState('');
   const [tab, setTab] = useState<Tab>('orders');
   const [orders, setOrders] = useState(initialOrders);
   const [inventory, setInventory] = useState(initialInventory);
@@ -57,6 +75,19 @@ export default function StaffPage() {
   const [toast, setToast] = useState('');
 
   useEffect(() => {
+    const savedSession = sessionStorage.getItem('home-myanmar-staff-session');
+    if (savedSession) {
+      try {
+        const parsed = JSON.parse(savedSession) as StaffSession;
+        if (staffAccounts.some((account) => account.email === parsed.email && account.role === parsed.role)) {
+          setSession(parsed);
+          setRole(parsed.role);
+        }
+      } catch { /* invalid session is ignored */ }
+    }
+    setAuthReady(true);
+  }, []);
+  useEffect(() => {
     const saved = localStorage.getItem('home-myanmar-inventory');
     if (saved) try { setInventory(JSON.parse(saved)); } catch { /* keep defaults */ }
   }, []);
@@ -64,7 +95,21 @@ export default function StaffPage() {
 
   const flash = (message: string) => { setToast(message); window.setTimeout(() => setToast(''), 2200); };
   const allowedTabs = useMemo<Tab[]>(() => role === 'staff' ? ['orders','staffshop'] : role === 'manager' ? ['orders','staffshop','inventory','recipes','purchases'] : ['orders','staffshop','inventory','recipes','purchases','sales','team'], [role]);
-  const setRoleSafe = (next: Role) => { setRole(next); const first = next === 'staff' && !['orders','staffshop'].includes(tab) ? 'orders' : next === 'manager' && ['sales','team'].includes(tab) ? 'orders' : tab; setTab(first as Tab); };
+  const login = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setLoginError('');
+    const normalizedEmail = loginEmail.trim().toLowerCase();
+    const credentialHash = await hashCredential(normalizedEmail, loginPassword);
+    const account = staffAccounts.find((item) => item.email === normalizedEmail && item.credentialHash === credentialHash);
+    if (!account) { setLoginError('メールアドレスまたはパスワードが正しくありません。'); return; }
+    const nextSession = { email:account.email, name:account.name, role:account.role };
+    sessionStorage.setItem('home-myanmar-staff-session', JSON.stringify(nextSession));
+    setSession(nextSession); setRole(account.role); setTab('orders'); setLoginPassword('');
+  };
+  const logout = () => {
+    sessionStorage.removeItem('home-myanmar-staff-session');
+    setSession(null); setRole('staff'); setTab('orders'); setLoginPassword('');
+  };
   const nextStatus = (status: OrderStatus): OrderStatus => status === '受付' ? '調理中' : status === '調理中' ? '受取待ち' : status === '受取待ち' ? '完了' : '完了';
   const staffSubtotal = staffMenu.reduce((sum, item) => sum + item.price * (staffCart[item.id] || 0), 0);
   const staffDiscount = Math.round(staffSubtotal * .3);
@@ -78,6 +123,16 @@ export default function StaffPage() {
     { id:'team',icon:'◎',label:'スタッフ・権限',min:'owner' },
   ];
 
+  if (!authReady) return <main className='staff-login-shell'><div className='staff-login-card'><p>Loading…</p></div></main>;
+  if (!session) return <main className='staff-login-shell'><form className='staff-login-card' onSubmit={login}>
+    <a className='staff-login-brand' href={customerSitePath}><span>H</span><div><strong>အိမ်လွမ်းပြေ</strong><small>MYANMAR RESTAURANT</small></div></a>
+    <p className='login-eyebrow'>STORE CONTROL</p><h1>店舗スタッフログイン</h1><p className='login-sub'>ဆိုင်ဝန်ထမ်း အကောင့်ဖြင့် ဝင်ရောက်ပါ<br/>店舗から発行された Staff・Manager・Owner アカウントをご利用ください。</p>
+    <label><span>メールアドレス / Gmail</span><input type='email' autoComplete='username' value={loginEmail} onChange={(event) => setLoginEmail(event.target.value)} placeholder='staff01@home-myanmar.jp' required/></label>
+    <label><span>パスワード</span><input type='password' autoComplete='current-password' value={loginPassword} onChange={(event) => setLoginPassword(event.target.value)} required/></label>
+    {loginError && <p className='login-error'>{loginError}</p>}
+    <button type='submit'>ログイン / ဝင်ရောက်ရန်</button><a className='customer-return' href={customerSitePath}>← お客様サイトへ戻る</a>
+  </form></main>;
+
   return <main className='staff-app'>
     <aside className='staff-sidebar'>
       <a className='staff-brand' href={customerSitePath}><span>H</span><div><strong>အိမ်လွမ်းပြေ</strong><small>STORE CONTROL</small></div></a>
@@ -85,7 +140,7 @@ export default function StaffPage() {
       <div className='sidebar-bottom'><a href={customerSitePath}>← お客様サイトへ戻る</a><small>HOME MYANMAR RESTAURANT<br/>那覇店</small></div>
     </aside>
     <section className='staff-main'>
-      <header className='staff-top'><div><p>STORE MANAGEMENT</p><h1>{nav.find((item) => item.id === tab)?.label}</h1></div><div className='role-switch'><span>表示権限</span><select value={role} onChange={(e) => setRoleSafe(e.target.value as Role)}>{roles.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select><b className={'role-badge ' + role}>{role.toUpperCase()}</b></div></header>
+      <header className='staff-top'><div><p>STORE MANAGEMENT</p><h1>{nav.find((item) => item.id === tab)?.label}</h1></div><div className='role-switch'><div className='signed-account'><strong>{session.name}</strong><small>{session.email}</small></div><b className={'role-badge ' + role}>{roles.find((item) => item.id === role)?.label}</b><button className='staff-logout' onClick={logout}>ログアウト</button></div></header>
 
       {tab === 'orders' && <div className='staff-content'><div className='metric-grid'><article><small>新規注文</small><strong>3</strong><span>対応が必要</span></article><article><small>調理中</small><strong>1</strong><span>平均 18分</span></article><article><small>本日の注文</small><strong>47</strong><span>+12% 昨日比</span></article><article><small>本日売上</small><strong>¥58,450</strong><span>目標の78%</span></article></div><div className='panel'><div className='panel-head'><div><h2>ライブ注文</h2><p>受付から受け渡しまで一つの画面で管理</p></div><button onClick={() => flash('最新の注文に更新しました')}>↻ 更新</button></div><div className='order-table'>{orders.map((order) => <article key={order.id}><div><b>#{order.id}</b><small>{order.time} · {order.type}</small></div><div><b>{order.customer}</b><small>{order.items}</small></div><strong>{yen(order.total)}</strong><span className={'status status-' + order.status}>{order.status}</span>{order.status !== '完了' ? <button className='advance' onClick={() => setOrders((list) => list.map((item) => item.id === order.id ? { ...item, status: nextStatus(item.status) } : item))}>{nextStatus(order.status)}へ →</button> : <button className='done' disabled>完了済み</button>}</article>)}</div></div></div>}
 

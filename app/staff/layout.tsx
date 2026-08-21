@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './staff.css';
+import './staff-login.css';
 
 export const metadata: Metadata = {
   title: '店舗管理 | အိမ်လွမ်းပြေ',

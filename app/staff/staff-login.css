@@ -1,0 +1,162 @@
+.staff-login-shell {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f5f1e7, #e4eadf);
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  font-family: Arial, 'Yu Gothic', sans-serif;
+  color: #102c25;
+}
+
+.staff-login-card {
+  width: min(460px, 100%);
+  background: #fff;
+  border: 1px solid var(--sc-line);
+  box-shadow: 0 22px 70px #0a322524;
+  padding: 38px;
+}
+
+.staff-login-brand {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 28px;
+}
+
+.staff-login-brand > span {
+  width: 54px;
+  height: 54px;
+  border: 1px solid var(--sc-gold);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font: 32px Georgia, serif;
+  color: var(--sc-gold);
+}
+
+.staff-login-brand strong,
+.staff-login-brand small {
+  display: block;
+}
+
+.staff-login-brand strong {
+  font: 22px Georgia, serif;
+  color: var(--sc-green);
+}
+
+.staff-login-brand small {
+  margin-top: 4px;
+  color: var(--sc-muted);
+  font-size: 9px;
+  letter-spacing: .18em;
+}
+
+.login-eyebrow {
+  margin: 0;
+  color: var(--sc-gold);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .2em;
+}
+
+.staff-login-card h1 {
+  margin: 8px 0;
+  color: var(--sc-green);
+  font: 31px Georgia, 'Yu Mincho', serif;
+}
+
+.login-sub {
+  margin: 0 0 24px;
+  color: var(--sc-muted);
+  font-size: 11px;
+  line-height: 1.8;
+}
+
+.staff-login-card form {
+  display: grid;
+  gap: 16px;
+}
+
+.staff-login-card label {
+  display: grid;
+  gap: 7px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.staff-login-card input {
+  height: 46px;
+  border: 1px solid var(--sc-line);
+  background: #fff;
+  padding: 0 13px;
+  font: 14px Arial;
+}
+
+.staff-login-card input:focus {
+  border-color: var(--sc-gold);
+  outline: 2px solid #c9902d55;
+}
+
+.staff-login-card form > button {
+  height: 48px;
+  border: 0;
+  background: var(--sc-green);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.login-error {
+  margin: 0;
+  color: var(--sc-warn);
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+.customer-return {
+  display: block;
+  margin-top: 20px;
+  color: var(--sc-green);
+  font-size: 10px;
+  text-align: center;
+}
+
+.signed-account {
+  display: grid;
+  text-align: right;
+  line-height: 1.35;
+}
+
+.signed-account strong {
+  color: var(--sc-green);
+  font-size: 10px;
+}
+
+.signed-account small {
+  color: var(--sc-muted);
+  font-size: 8px;
+}
+
+.staff-logout {
+  height: 34px;
+  border: 1px solid var(--sc-line);
+  background: #fff;
+  color: var(--sc-green);
+  padding: 0 11px;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+@media (max-width: 640px) {
+  .staff-login-card {
+    padding: 28px 22px;
+  }
+
+  .signed-account {
+    display: none;
+  }
+
+  .staff-logout {
+    padding: 0 8px;
+  }
+}

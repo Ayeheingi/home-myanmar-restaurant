@@ -6,7 +6,7 @@ const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
 const sitePath = (path: string) => `${basePath}${path}`;
 
 type Food = {
-  id: number; mm: string; jp: string; descriptionJp: string; descriptionMm: string; descriptionEn: string; price: number;
+  id: number; mm: string; jp: string; en: string; descriptionJp: string; descriptionMm: string; descriptionEn: string; price: number;
   category: string; image: string; popular?: boolean; special?: boolean;
   optionTitle: string;
   options: { id: string; label: string; price: number }[];
@@ -34,7 +34,7 @@ type OrderRecord = {
   subtotal: number; deliveryFee: number; discount: number;
   customer?: { name: string; phone: string; address: string };
 };
-type RawFood = Omit<Food, 'descriptionMm' | 'descriptionEn'>;
+type RawFood = Omit<Food, 'en' | 'descriptionMm' | 'descriptionEn'>;
 type Language = 'jp' | 'en' | 'mm';
 type OrderStatus = '受付' | '調理中' | '配達中' | '受取待ち' | '完了';
 type FilterPrice = 'all' | 'under800' | '800to999' | '1000plus';
@@ -42,6 +42,20 @@ type FilterSpice = 'all' | 'none' | 'mild' | 'normal' | 'hot';
 
 const DELIVERY_FEE = 300;
 const FREE_DELIVERY_THRESHOLD = 2000;
+
+const englishFoodNames: Record<number, string> = {
+  1:'Mohinga', 2:'Shan Noodles', 3:'Warm Shan Tofu Noodles', 4:'Ohn No Khao Swe', 5:'Kyay Oh', 6:'Nan Gyi Thoke',
+  7:'Chicken Danbauk', 8:'Myanmar Mixed Rice', 9:'Boiled Bean Rice', 10:'Myanmar Chicken Curry', 11:'Myanmar Fish Curry',
+  12:'Stir-Fried Liver and Cauliflower', 13:'Stir-Fried Bitter Melon and Egg', 14:'Fermented Fish Dip with Vegetables',
+  15:'Spicy Stir-Fried Dried Fish', 16:'Myanmar Dessert Platter', 17:'Myanmar Ginger Salad', 18:'Bean and Cabbage Salad',
+  19:'Green Mango Salad', 20:'Coconut Rice Dumplings', 21:'Bean Curry with Paratha', 22:'Myanmar Glass Noodle Soup',
+  23:'Shan Tofu Salad', 24:'Myanmar Steamed Bun', 25:'Fried Dough Sticks', 26:'Mild Tea Leaf Salad',
+  27:'Mixed Tea Leaf Salad', 28:'Tea Leaf Rice', 29:'Rakhine Rice Noodle Salad', 30:'Shwe Htamin',
+  31:'Mont Tine Chon', 32:'Mont Let Saung', 33:'Mont Kywe The', 34:'Myanmar Semolina Cake', 35:'Htoe Mont',
+  36:'Green Papaya Salad', 37:'Fried Shan Tofu', 38:'Strawberry Jelly Drink', 39:'Pandan and Coconut Layered Jelly',
+  40:'Myanmar Potato Cake', 41:'Sugarcane Juice', 42:'Lemon Juice', 43:'Tamarind Juice', 44:'Myanmar Hot Tea',
+  45:'Myanmar Milk Tea', 46:'Sago Coconut Milk Dessert', 47:'Weekend Family Set',
+};
 
 const categories = [
   { id: 'popular', icon: '✦', jp: '人気', en: 'Popular', mm: 'လူကြိုက်များ' },
@@ -369,6 +383,7 @@ const foods: Food[] = ([
     toppings: [] },
 ] as RawFood[]).map((food) => ({
   ...food,
+  en: englishFoodNames[food.id],
   descriptionMm: descriptionMmFor(food),
   descriptionEn: descriptionEnFor(food),
   image: food.image ? sitePath(food.image) : '',
@@ -380,6 +395,61 @@ const vegetarianIds = new Set([13,18,20,21,23,30,31,32,33,34,35,37,39,40]);
 const beginnerIds = new Set([1,2,4,7,9,10,18,20,21,24,38,45]);
 const popularMenuIds = new Set([1,2,4,7,9,10,18,21,27,45]);
 const descriptionOf = (food: Food, language: Language) => language === 'jp' ? food.descriptionJp : language === 'en' ? food.descriptionEn : food.descriptionMm;
+const foodNameOf = (food: Food, language: Language) => language === 'jp' ? food.jp : language === 'en' ? food.en || englishFoodNames[food.id] : food.mm;
+const secondaryFoodNameOf = (food: Food, language: Language) => language === 'jp' ? food.mm : language === 'mm' ? food.jp : `${food.mm} / ${food.jp}`;
+
+const englishSectionTitles: Record<string, string> = {
+  'サイズを選択':'Choose a size', '種類を選択':'Choose a type', '量を選択':'Choose a portion', '個数を選択':'Choose a quantity',
+  '本数を選択':'Choose a quantity', 'パラタの枚数を選択':'Choose the number of parathas', '調理方法を選択':'Choose a cooking style',
+  '味を選択':'Choose a flavor', '甘さを選択':'Choose sweetness', '温度を選択':'Choose temperature', '濃さを選択':'Choose strength',
+  '氷を選択':'Choose ice level', '食べ方を選択':'Choose how to serve', '温め方を選択':'Choose heating', 'ソースを選択':'Choose a sauce',
+  '具材を選択':'Choose a filling', '中身を選択':'Choose a filling', 'メインを選択':'Choose a main dish', '卵を選択':'Choose an egg option',
+  '種類数を選択':'Choose the number of varieties', 'お菓子を選択':'Choose sweets', 'セットサイズ':'Set contents',
+  'カレー・おかずを2品選択':'Choose two curries or side dishes', '辛さを選択':'Choose a spice level',
+};
+const englishChoiceLabels: Record<string, string> = {
+  '普通':'Regular', '大盛り':'Large', '大':'Large', '小':'Small', '辛くない':'Not spicy', 'ひかえめ':'Mild', '辛口':'Spicy',
+  '甘口':'Mild', '甘さひかえめ':'Less sweet', '控えめ':'Less sweet', '甘め':'Sweeter', 'なし':'None', '少なめ':'Less ice',
+  'ホット':'Hot', 'アイス':'Iced', '温かい':'Warm', '冷たい':'Cold', '熱め':'Extra hot', '薄め':'Light', '濃いめ':'Strong',
+  'スープ':'Soup', '汁なし':'Dry', '汁なし・油和え':'Dry with seasoned oil', 'そのまま':'As served', '温める':'Warm it up',
+  '鶏肉':'Chicken', '豚肉':'Pork', '魚':'Fish', '卵':'Egg', '野菜':'Vegetables', '魚カレー':'Fish curry', '魚の唐揚げ':'Fried fish',
+  'ゆで卵':'Boiled egg', '目玉焼き':'Fried egg', '卵なし':'No egg', '卵入り':'With egg', 'ライス':'Rice', 'パラタ追加':'Extra paratha',
+  '練乳付き':'With condensed milk', '豆カレー付き':'With bean curry', 'ソースなし':'No sauce', 'スイートソース':'Sweet sauce',
+  '甘酸っぱいピリ辛ソース':'Sweet-and-sour chili sauce', 'ココナッツ':'Coconut', 'ココナッツ＆パームシュガー':'Coconut & palm sugar',
+  '豆あん':'Bean paste', 'ポット':'Pot', 'ファミリーセット（3〜4名様）':'Family set (serves 3–4)',
+  'ミャンマー風チキンカレー':'Myanmar chicken curry', 'ミャンマー風魚カレー':'Myanmar fish curry',
+  'レバーとカリフラワー炒め':'Stir-fried liver and cauliflower', 'ゴーヤと卵炒め':'Stir-fried bitter melon and egg',
+  '発酵魚ディップと野菜':'Fermented fish dip with vegetables', 'ピリ辛干し魚炒め':'Spicy stir-fried dried fish',
+};
+const englishIngredientNames: Record<string, string> = {
+  '鶏肉':'chicken', '豚肉':'pork', '豚肉団子':'pork meatballs', '魚':'fish', '干し魚':'dried fish', '魚団子':'fish balls',
+  '卵':'egg', 'ゆで卵':'boiled egg', 'レバー':'liver', 'カリフラワー':'cauliflower', 'ゴーヤ':'bitter melon', '野菜':'vegetables',
+  '青菜':'greens', 'キャベツ':'cabbage', 'トマト':'tomato', '玉ねぎ':'onion', 'きゅうり':'cucumber', 'オクラ':'okra',
+  '青マンゴー':'green mango', '青パパイヤ':'green papaya', 'インゲン':'green beans', 'じゃがいも':'potato', 'きのこ':'mushrooms',
+  '麺':'noodles', '春雨':'glass noodles', 'ライス':'rice', 'パクチー':'coriander', 'ピーナッツ':'peanuts', 'ごま':'sesame',
+  '干しエビ':'dried shrimp', 'フライドオニオン':'fried onion', 'フライドガーリック':'fried garlic', '発酵茶葉':'fermented tea leaves',
+  'ココナッツ':'coconut', 'ココナッツフレーク':'coconut flakes', 'ココナッツミルク':'coconut milk', '豆カレー':'bean curry',
+  'ソース':'sauce', 'カレーソース':'curry sauce', 'ディップ':'dip', 'ミルク':'milk', '練乳':'condensed milk', 'レモン':'lemon',
+  'ライム':'lime', 'ミント':'mint', 'ゼリー':'jelly', 'タピオカ':'tapioca', 'ストロベリーゼリー':'strawberry jelly',
+};
+const englishChoiceOf = (id: string, label: string) => {
+  const japanese = label.includes('/') ? label.split('/').at(-1)?.trim() || label : label;
+  if (englishChoiceLabels[japanese]) return englishChoiceLabels[japanese];
+  const count = japanese.match(/^(\d+)(個|本|枚|種類|人前)$/);
+  if (count) return `${count[1]} ${count[2] === '本' ? 'sticks' : count[2] === '種類' ? 'varieties' : count[2] === '人前' ? Number(count[1]) === 1 ? 'serving' : 'servings' : Number(count[1]) === 1 ? 'piece' : 'pieces'}`;
+  if (japanese.endsWith('追加')) {
+    const ingredient = japanese.slice(0, -2);
+    return `Extra ${englishIngredientNames[ingredient] || id.replaceAll('-', ' ')}`;
+  }
+  return id.replaceAll('-', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
+};
+const choiceLabelOf = (choice: {id:string; label:string}, language: Language) => language === 'en' ? englishChoiceOf(choice.id, choice.label) : choice.label;
+const sectionTitleOf = (title: string | undefined, language: Language, fallback = 'Choose an option') => {
+  if (!title) return fallback;
+  if (language !== 'en') return title;
+  const japanese = title.includes('/') ? title.split('/').at(-1)?.trim() || title : title;
+  return englishSectionTitles[japanese] || fallback;
+};
 const tasteOf = (food: Food, language: Language = 'jp') => {
   if (language === 'mm') {
     return food.category === 'dessert' || food.category === 'drink' ? 'ချိုမြိန်နူးညံ့' : food.defaultSpice === 'none' ? 'အရသာနူးညံ့' : food.id === 19 || food.id === 36 ? 'ချဉ်စပ်' : 'မွှေးကြိုင်ပြီး အနည်းငယ်စပ်';
@@ -530,7 +600,7 @@ export default function Home() {
   const filteredFoods = useMemo(() => {
     let list = favoritesOnly ? foods.filter((food) => favorites.includes(food.id)) : category === 'all' ? foods.filter((food) => food.id !== 47) : category === 'popular' ? foods.filter((food) => popularMenuIds.has(food.id)) : foods.filter((food) => food.category === category);
     const q = query.toLowerCase();
-    if (q.trim()) list = list.filter((food) => (food.jp + ' ' + food.mm).toLowerCase().includes(q));
+    if (q.trim()) list = list.filter((food) => (food.jp + ' ' + food.mm + ' ' + food.en).toLowerCase().includes(q));
     if (filterPrice === 'under800') list = list.filter((food) => food.price < 800);
     if (filterPrice === '800to999') list = list.filter((food) => food.price >= 800 && food.price < 1000);
     if (filterPrice === '1000plus') list = list.filter((food) => food.price >= 1000);
@@ -701,7 +771,7 @@ export default function Home() {
       <section className='content-section' id='menu'>
         <div className='section-heading'><div><p className='eyebrow'>EXPLORE OUR MENU</p><h2>{t('categories')}</h2></div><button className='view-all' onClick={() => { setCategory('all'); setFavoritesOnly(false); }}>{t('viewAll')} <span>→</span></button></div>
         <div className='categories'>
-          {categories.map((item) => <button key={item.id} onClick={() => { setCategory(item.id); setFavoritesOnly(false); }} className={!favoritesOnly && category === item.id ? 'active' : ''}><span>{item.icon}</span><strong>{item[language]}</strong><small>{language === 'jp' ? item.mm : item.jp}</small></button>)}
+          {categories.map((item) => <button key={item.id} onClick={() => { setCategory(item.id); setFavoritesOnly(false); }} className={!favoritesOnly && category === item.id ? 'active' : ''}><span>{item.icon}</span><strong>{item[language]}</strong>{language !== 'en' && <small>{language === 'jp' ? item.mm : item.jp}</small>}</button>)}
         </div>
       </section>
 
@@ -710,8 +780,8 @@ export default function Home() {
         {filteredFoods.length ? <div className='food-grid'>
           {filteredFoods.map((food) => <article className='food-card' key={food.id}>
             <button className={'heart ' + (favorites.includes(food.id) ? 'liked' : '')} aria-label='Favorite' onClick={() => setFavorites((list) => list.includes(food.id) ? list.filter((id) => id !== food.id) : list.concat(food.id))}>♥</button>
-            <button className='food-image' onClick={() => openFood(food)}>{food.image ? <img src={food.image} alt={food.jp} loading='lazy' decoding='async'/> : <span className='food-placeholder'><b>Ⴙ</b><small>{food.mm}<br/>{food.jp}</small></span>}{food.special && <span className='special-badge'>{food.id === 47 ? 'FAMILY SET' : <>TODAY&apos;S SPECIAL</>}</span>}</button>
-            <div className='food-info'><div className='food-badges'>{popularMenuIds.has(food.id) && <span>{t('popular')}</span>}{beginnerIds.has(food.id) && <span>{t('beginner')}</span>}{vegetarianIds.has(food.id) && <span>{t('vegetarian')}</span>}</div><div className='food-title'><div><small>{food.mm}</small><h3>{food.jp}</h3></div>{food.category !== 'drink' && food.category !== 'dessert' && !food.hideSpice && <span className='spicy'>{t('spicyLevel')} 0–3</span>}</div><p>{descriptionOf(food, language)}</p><div className='food-bottom'><strong>{yen(food.price)}</strong><button onClick={() => openFood(food)}>＋ {t('choose')}</button></div></div>
+            <button className='food-image' onClick={() => openFood(food)}>{food.image ? <img src={food.image} alt={foodNameOf(food, language)} loading='lazy' decoding='async'/> : <span className='food-placeholder'><b>Ⴙ</b><small>{foodNameOf(food, language)}</small></span>}{food.special && <span className='special-badge'>{food.id === 47 ? 'FAMILY SET' : <>TODAY&apos;S SPECIAL</>}</span>}</button>
+            <div className='food-info'><div className='food-badges'>{popularMenuIds.has(food.id) && <span>{t('popular')}</span>}{beginnerIds.has(food.id) && <span>{t('beginner')}</span>}{vegetarianIds.has(food.id) && <span>{t('vegetarian')}</span>}</div><div className='food-title'><div><small>{secondaryFoodNameOf(food, language)}</small><h3>{foodNameOf(food, language)}</h3></div>{food.category !== 'drink' && food.category !== 'dessert' && !food.hideSpice && <span className='spicy'>{t('spicyLevel')} 0–3</span>}</div><p>{descriptionOf(food, language)}</p><div className='food-bottom'><strong>{yen(food.price)}</strong><button onClick={() => openFood(food)}>＋ {t('choose')}</button></div></div>
           </article>)}
         </div> : <div className='empty-state'><span>⌕</span><h3>{t('noFood')}</h3><button onClick={() => setQuery('')}>{t('clearSearch')}</button></div>}
       </section>
@@ -719,7 +789,7 @@ export default function Home() {
       <section className='promo-banner'>
         <img className='promo-photo' src={foods.find((food) => food.id === 47)?.image} alt='Myanmar Family Set' loading='lazy' decoding='async'/>
         <div><p className='eyebrow light'>WEEKEND SPECIAL</p><h2>{language === 'jp' ? <>家族の食卓に、<br/>もっとミャンマーを。</> : language === 'en' ? <>Bring more Myanmar<br/>to the family table.</> : <>မိသားစုထမင်းဝိုင်းမှာ<br/>မြန်မာ့အရသာကို ပိုမိုခံစားပါ။</>}</h2><p>{l('カレー2品・ライス4人前・サラダ・ミャンマー茶のお得なセット','A value set with two curries, rice for four, salad and Myanmar tea.','ဟင်း ၂ မျိုး၊ ထမင်း ၄ ယောက်စာ၊ အသုပ်နှင့် မြန်မာရေနွေးကြမ်း ပါဝင်သောတန်ဖိုးရှိအစုံ')}</p><button onClick={() => { const familySet = foods.find((food) => food.id === 47); if (familySet) openFood(familySet); }}>{l('セットを見る','View set','အစုံကိုကြည့်ရန်')} →</button></div>
-        <div className='promo-price'><small>FAMILY SET</small><strong>¥3,800</strong><span>通常 ¥4,600</span></div>
+        <div className='promo-price'><small>FAMILY SET</small><strong>¥3,800</strong><span>{l('通常 ¥4,600','Regular ¥4,600','ပုံမှန် ¥4,600')}</span></div>
       </section>
 
       <footer><div className='brand inverted'><span>H</span><div><strong>အိမ်လွမ်းပြေ</strong><small>MYANMAR RESTAURANT</small><span className='brand-tagline'>{l('那覇で楽しむ、本格ミャンマー料理。','Authentic Myanmar cuisine in Naha.','နာဟာမြို့မှာ စစ်မှန်တဲ့ မြန်မာအစားအစာကို ခံစားပါ။')}</span></div></div><div><span>{t('hours')}</span><a href='mailto:home@gmail.com'>home@gmail.com</a><a href='tel:09012340000'>090-1234-0000</a><button onClick={() => setInfoPanel('store')}>{t('storeInfo')}</button><button onClick={() => setInfoPanel('legal')}>{t('legal')}</button><button onClick={() => setInfoPanel('privacy')}>{t('privacy')}</button><button onClick={() => setInfoPanel('cancellation')}>{t('cancellation')}</button><a href={sitePath('/staff/')}>{t('staffManagement')}</a></div></footer>
@@ -731,53 +801,53 @@ export default function Home() {
       {selected && <div className='modal-layer' onMouseDown={(event) => event.currentTarget === event.target && setSelected(null)}>
         <div className='detail-drawer'>
           <button className='modal-close' onClick={() => setSelected(null)}>×</button>
-          <div className='detail-photo'>{selected.image ? <img src={selected.image} alt={selected.jp}/> : <div className='detail-placeholder'><b>Ⴙ</b><strong>{selected.mm}</strong><small>{selected.jp}</small></div>}<span>{selected.id === 47 ? 'FAMILY SET' : selected.category.toUpperCase()}</span></div>
+          <div className='detail-photo'>{selected.image ? <img src={selected.image} alt={foodNameOf(selected, language)}/> : <div className='detail-placeholder'><b>Ⴙ</b><strong>{foodNameOf(selected, language)}</strong></div>}<span>{selected.id === 47 ? 'FAMILY SET' : selected.category.toUpperCase()}</span></div>
           <div className='detail-content'>
             <p className='eyebrow'>{t('foodDetail')}</p>
-            <small className='mm-name'>{selected.mm}</small>
-            <h2>{selected.jp}</h2>
+            <small className='mm-name'>{secondaryFoodNameOf(selected, language)}</small>
+            <h2>{foodNameOf(selected, language)}</h2>
             <strong className='detail-base-price'>{yen(selected.price)}</strong>
             <p className='detail-desc'>{descriptionOf(selected, language)}</p>
             <div className='food-facts'><span><b>{t('taste')}</b>{tasteOf(selected, language)}</span>{selected.category !== 'drink' && selected.category !== 'dessert' && !selected.hideSpice && <span><b>{t('spicyLevel')}</b>{selected.defaultSpice === 'none' ? '0 / 3' : selected.defaultSpice === 'mild' ? '1 / 3' : selected.defaultSpice === 'normal' ? '2 / 3' : '3 / 3'}</span>}<span><b>{t('allergy')}</b>{allergyOf(selected, language)}</span></div>
 
             <div className='detail-option-block'>
-              <div className='detail-option-title'><strong>{selected.optionTitle}</strong><span>（{t('required')}）</span></div>
+              <div className='detail-option-title'><strong>{sectionTitleOf(selected.optionTitle, language)}</strong><span>（{t('required')}）</span></div>
               <div className='choice-list'>
                 {selected.options.map((option) => <label className={detailOption === option.id ? 'selected' : ''} key={option.id}>
                   <input type='radio' name='food-option' checked={detailOption === option.id} onChange={() => setDetailOption(option.id)}/>
-                  <span className='radio-mark'/><b>{option.label}</b>{option.price > 0 && <strong>+{yen(option.price)}</strong>}
+                  <span className='radio-mark'/><b>{choiceLabelOf(option, language)}</b>{option.price > 0 && <strong>+{yen(option.price)}</strong>}
                 </label>)}
               </div>
-              {selected.id === 5 && detailOption === 'oil' && <div className='soup-note'><b>ဟင်းရည်သီးခြားပါဝင်သည်</b><span>スープ付き</span></div>}
+              {selected.id === 5 && detailOption === 'oil' && <div className='soup-note'><b>{l('スープ付き','Soup included','ဟင်းရည်သီးခြားပါဝင်သည်')}</b></div>}
             </div>
 
             {selected.secondaryOptions && <div className='detail-option-block'>
-              <div className='detail-option-title'><strong>{selected.secondaryTitle}</strong><span>（{t('required')}）</span></div>
+              <div className='detail-option-title'><strong>{sectionTitleOf(selected.secondaryTitle, language)}</strong><span>（{t('required')}）</span></div>
               <div className='choice-list'>
                 {selected.secondaryOptions.map((option) => <label className={detailSecondary === option.id ? 'selected' : ''} key={option.id}>
                   <input type='radio' name='secondary-option' checked={detailSecondary === option.id} onChange={() => setDetailSecondary(option.id)}/>
-                  <span className='radio-mark'/><b>{option.label}</b>{option.price > 0 && <strong>+{yen(option.price)}</strong>}
+                  <span className='radio-mark'/><b>{choiceLabelOf(option, language)}</b>{option.price > 0 && <strong>+{yen(option.price)}</strong>}
                 </label>)}
               </div>
             </div>}
 
             {!selected.hideSpice && <div className='detail-option-block'>
-              <div className='detail-option-title'><strong>{selected.spiceTitle || 'အစပ်အဆင့်ရွေးပါ / 辛さを選択'}</strong><span>（{t('required')}）</span></div>
+              <div className='detail-option-title'><strong>{sectionTitleOf(selected.spiceTitle || 'အစပ်အဆင့်ရွေးပါ / 辛さを選択', language, t('spicyLevel'))}</strong><span>（{t('required')}）</span></div>
               <div className='choice-list spice-list'>
                 {(selected.flavors || spiceOptions).map((spice) => <label className={detailSpice === spice.id ? 'selected' : ''} key={spice.id}>
                   <input type='radio' name='spice-option' checked={detailSpice === spice.id} onChange={() => setDetailSpice(spice.id)}/>
-                  <span className='radio-mark'/><b>{spice.label}</b>
+                  <span className='radio-mark'/><b>{choiceLabelOf(spice, language)}</b>
                 </label>)}
               </div>
             </div>}
 
             {selected.multiOptions && <div className='detail-option-block'>
-              <div className='detail-option-title'><strong>{selected.multiTitle}</strong><span>（{t('required')}・{l('複数選択可','Multiple selections allowed','တစ်ခုထက်ပိုရွေးနိုင်')}）</span></div>
-              <p className='selection-counter'>{requiredMultiCount}種類を選択：<b>{detailMulti.length} / {requiredMultiCount}</b></p>
+              <div className='detail-option-title'><strong>{sectionTitleOf(selected.multiTitle, language)}</strong><span>（{t('required')}・{l('複数選択可','Multiple selections allowed','တစ်ခုထက်ပိုရွေးနိုင်')}）</span></div>
+              <p className='selection-counter'>{l(`${requiredMultiCount}種類を選択`,`Choose ${requiredMultiCount}`,`${requiredMultiCount} မျိုးရွေးပါ`)}：<b>{detailMulti.length} / {requiredMultiCount}</b></p>
               <div className='choice-list topping-list'>
                 {selected.multiOptions.map((option) => <label className={detailMulti.includes(option.id) ? 'selected' : ''} key={option.id}>
                   <input type='checkbox' checked={detailMulti.includes(option.id)} onChange={() => setDetailMulti((list) => list.includes(option.id) ? list.filter((id) => id !== option.id) : list.length < requiredMultiCount ? list.concat(option.id) : list)}/>
-                  <span className='check-mark'/><b>{option.label}</b>
+                  <span className='check-mark'/><b>{choiceLabelOf(option, language)}</b>
                 </label>)}
               </div>
             </div>}
@@ -787,7 +857,7 @@ export default function Home() {
               <div className='choice-list topping-list'>
                 {selected.toppings.map((topping) => <label className={detailToppings.includes(topping.id) ? 'selected' : ''} key={topping.id}>
                   <input type='checkbox' checked={detailToppings.includes(topping.id)} onChange={() => setDetailToppings((list) => list.includes(topping.id) ? list.filter((id) => id !== topping.id) : list.concat(topping.id))}/>
-                  <span className='check-mark'/><b>{topping.label}</b><strong>+{yen(topping.price)}</strong>
+                  <span className='check-mark'/><b>{choiceLabelOf(topping, language)}</b><strong>+{yen(topping.price)}</strong>
                 </label>)}
               </div>
             </div>}
@@ -795,7 +865,7 @@ export default function Home() {
             <label className='request-note'>
               <span><b>{t('request')}</b>（{t('optional')}）</span>
               <small>{t('requestSub')}</small>
-              <textarea value={detailNote} onChange={(event) => setDetailNote(event.target.value)} placeholder={'例：ကြက်သွန်နီမထည့်ပါနှင့်\n例：玉ねぎ抜き'}/>
+              <textarea value={detailNote} onChange={(event) => setDetailNote(event.target.value)} placeholder={l('例：玉ねぎ抜き','Example: No onions','ဥပမာ：ကြက်သွန်နီမထည့်ပါနှင့်')}/>
             </label>
 
             <div className='detail-actions'>
@@ -811,11 +881,11 @@ export default function Home() {
         <div className='drawer-head'><div><p className='eyebrow'>{t('yourOrder')}</p><h2>{t('cart')} <span>{cartCount}{t('items')}</span></h2></div><button className='modal-close static' onClick={() => setShowCart(false)}>×</button></div>
         {cart.length ? <><div className='cart-list'>{cart.map((item, index) => <div className='cart-item' key={item.id + '-' + index}>
           {item.image ? <img src={item.image} alt=''/> : <span className='cart-placeholder'>Ⴙ</span>}
-          <div><strong>{item.mm} / {item.jp}</strong>
-            <small>{item.options.find((option) => option.id === item.selectedOption)?.label}{!item.hideSpice && ' · ' + (item.flavors || spiceOptions).find((spice) => spice.id === item.selectedSpice)?.label}</small>
-            {item.secondaryOptions && <small>+ {item.secondaryOptions.find((option) => option.id === item.selectedSecondary)?.label}</small>}
-            {item.selectedMulti.length > 0 && <small>+ {item.multiOptions?.filter((option) => item.selectedMulti.includes(option.id)).map((option) => option.label).join('、')}</small>}
-            {item.selectedToppings.length > 0 && <small>+ {item.toppings.filter((topping) => item.selectedToppings.includes(topping.id)).map((topping) => topping.label).join('、')}</small>}
+          <div><strong>{foodNameOf(item, language)}</strong>
+            <small>{choiceLabelOf(item.options.find((option) => option.id === item.selectedOption) || item.options[0], language)}{!item.hideSpice && ' · ' + choiceLabelOf((item.flavors || spiceOptions).find((spice) => spice.id === item.selectedSpice) || spiceOptions[0], language)}</small>
+            {item.secondaryOptions && <small>+ {choiceLabelOf(item.secondaryOptions.find((option) => option.id === item.selectedSecondary) || item.secondaryOptions[0], language)}</small>}
+            {item.selectedMulti.length > 0 && <small>+ {item.multiOptions?.filter((option) => item.selectedMulti.includes(option.id)).map((option) => choiceLabelOf(option, language)).join(language === 'en' ? ', ' : '、')}</small>}
+            {item.selectedToppings.length > 0 && <small>+ {item.toppings.filter((topping) => item.selectedToppings.includes(topping.id)).map((topping) => choiceLabelOf(topping, language)).join(language === 'en' ? ', ' : '、')}</small>}
             {item.note && <small className='cart-note'>{t('note')}: {item.note}</small>}
             <div className='mini-quantity'><button onClick={() => setCart((items) => items.map((entry, i) => i === index ? { ...entry, quantity: Math.max(1, entry.quantity - 1) } : entry))}>−</button><span>{item.quantity}</span><button onClick={() => setCart((items) => items.map((entry, i) => i === index ? { ...entry, quantity: entry.quantity + 1 } : entry))}>+</button></div>
             <button className='edit-item' onClick={() => editCartItem(item, index)}>{t('edit')}</button>
@@ -837,16 +907,16 @@ export default function Home() {
           {checkoutForm.payment === 'card' && <div className='payment-fields'><label><span>{t('cardNumber')}</span><input inputMode='numeric' value={checkoutForm.cardNumber} onChange={(e) => setCheckoutForm({...checkoutForm,cardNumber:e.target.value})} placeholder='1234 5678 9012 3456'/></label><div><label><span>{t('expiry')}</span><input value={checkoutForm.expiry} onChange={(e) => setCheckoutForm({...checkoutForm,expiry:e.target.value})} placeholder='MM/YY'/></label><label><span>CVC</span><input inputMode='numeric' value={checkoutForm.cvc} onChange={(e) => setCheckoutForm({...checkoutForm,cvc:e.target.value})} placeholder='123'/></label></div></div>}
           {checkoutForm.payment === 'paypay' && <p className='payment-help'>{t('paypayHelp')}</p>}
           <div className='order-total'><p><span>{t('productTotal')}</span><b>{yen(subtotal)}</b></p>{couponDiscount > 0 && <p className='discount-row'><span>{t('discount')}</span><b>−{yen(couponDiscount)}</b></p>}<p><span>{t('deliveryFee')}</span><b>{fee ? yen(fee) : t('free')}</b></p><div><span>{t('paymentTotal')}</span><strong>{yen(paymentTotal)}</strong></div></div><button className='primary wide' onClick={openCheckoutReview}>{yen(paymentTotal)}　{t('reviewOrder')}</button><small className='secure'>{t('notConfirmed')}</small></div></div> :
-          <div className='checkout-review'><p className='eyebrow'>{t('finalReview')}</p><h2>{t('finalTitle')}</h2><p>{t('finalHelp')}</p><div className='review-summary'><section><h3>{t('orderItems')}</h3><div className='review-items'>{cart.map((item, index) => <p key={item.id + '-review-' + index}><span>{language === 'mm' ? item.mm : item.jp} × {item.quantity}</span><b>{yen(item.unitPrice * item.quantity)}</b></p>)}</div><p><span>{t('productTotal')}</span><b>{yen(subtotal)}</b></p>{couponDiscount > 0 && <p className='discount-row'><span>{t('discount')}</span><b>−{yen(couponDiscount)}</b></p>}<p><span>{t('deliveryFee')}</span><b>{fee ? yen(fee) : t('free')}</b></p><div><span>{t('paymentTotal')}</span><strong>{yen(paymentTotal)}</strong></div></section><section><h3>{t('receiveInfo')}</h3><p><span>{t('method')}</span><b>{method === 'delivery' ? t('delivery') : t('pickup')}</b></p>{method === 'delivery' && <><p><span>{t('address')}</span><b>{checkoutForm.address}</b></p><p><span>{t('name')}</span><b>{checkoutForm.name}</b></p><p><span>{t('phone')}</span><b>{checkoutForm.phone}</b></p></>}<p><span>{t('receiveTime')}</span><b>{checkoutForm.timing === 'asap' ? t('asap') : checkoutForm.scheduled}</b></p><p><span>{t('payment')}</span><b>{checkoutForm.payment === 'cash' ? t('cash') : checkoutForm.payment === 'card' ? `${t('card')} · ${t('demoPayment')}` : `PayPay · ${t('demoPayment')}`}</b></p>{checkoutForm.note && <p><span>{t('note')}</span><b>{checkoutForm.note}</b></p>}</section></div><div className='review-actions'><button className='secondary' onClick={() => setCheckoutReview(false)}>{t('backEdit')}</button><button className='primary' onClick={placeOrder}>{yen(paymentTotal)}　{t('placeOrder')}</button></div></div>}
+          <div className='checkout-review'><p className='eyebrow'>{t('finalReview')}</p><h2>{t('finalTitle')}</h2><p>{t('finalHelp')}</p><div className='review-summary'><section><h3>{t('orderItems')}</h3><div className='review-items'>{cart.map((item, index) => <p key={item.id + '-review-' + index}><span>{foodNameOf(item, language)} × {item.quantity}</span><b>{yen(item.unitPrice * item.quantity)}</b></p>)}</div><p><span>{t('productTotal')}</span><b>{yen(subtotal)}</b></p>{couponDiscount > 0 && <p className='discount-row'><span>{t('discount')}</span><b>−{yen(couponDiscount)}</b></p>}<p><span>{t('deliveryFee')}</span><b>{fee ? yen(fee) : t('free')}</b></p><div><span>{t('paymentTotal')}</span><strong>{yen(paymentTotal)}</strong></div></section><section><h3>{t('receiveInfo')}</h3><p><span>{t('method')}</span><b>{method === 'delivery' ? t('delivery') : t('pickup')}</b></p>{method === 'delivery' && <><p><span>{t('address')}</span><b>{checkoutForm.address}</b></p><p><span>{t('name')}</span><b>{checkoutForm.name}</b></p><p><span>{t('phone')}</span><b>{checkoutForm.phone}</b></p></>}<p><span>{t('receiveTime')}</span><b>{checkoutForm.timing === 'asap' ? t('asap') : checkoutForm.scheduled}</b></p><p><span>{t('payment')}</span><b>{checkoutForm.payment === 'cash' ? t('cash') : checkoutForm.payment === 'card' ? `${t('card')} · ${t('demoPayment')}` : `PayPay · ${t('demoPayment')}`}</b></p>{checkoutForm.note && <p><span>{t('note')}</span><b>{checkoutForm.note}</b></p>}</section></div><div className='review-actions'><button className='secondary' onClick={() => setCheckoutReview(false)}>{t('backEdit')}</button><button className='primary' onClick={placeOrder}>{yen(paymentTotal)}　{t('placeOrder')}</button></div></div>}
       </div></div>}
 
-      {tracking && completedOrder && <div className='modal-layer'><div className='tracking-card'><button className='modal-close' onClick={() => setTracking(false)}>×</button><div className='success-icon'>✓</div><p className='eyebrow'>ORDER #{completedOrder.id}</p><h2>{completedOrder.status === '完了' ? t('orderComplete') : t('trackingTitle')}</h2><p>{t('thanks')}</p><div className='order-progress'>{(completedOrder.method === 'delivery' ? ['受付','調理中','配達中','完了'] : ['受付','調理中','受取待ち','完了']).map((status, index, steps) => { const current = Math.max(0, steps.indexOf(completedOrder.status)); return <div className={index <= current ? 'active' : ''} key={status}><span>{index < current ? '✓' : index + 1}</span><b>{status === '受付' ? t('accepted') : status === '調理中' ? t('cooking') : status === '配達中' ? t('delivering') : status === '受取待ち' ? t('readyPickup') : t('completed')}</b></div>; })}</div><div className='eta'><small>{completedOrder.method === 'delivery' ? 'DELIVERY TIME' : 'PICKUP TIME'}</small><strong>{completedOrder.receiveTime}</strong></div><div className='complete-items'>{completedOrder.items.map((item,index) => <p key={item.id + '-' + index}><span>{language === 'mm' ? item.mm : item.jp} × {item.quantity}</span><b>{yen(item.unitPrice * item.quantity)}</b></p>)}</div><div className='complete-total'><span>{t('total')}</span><strong>{yen(completedOrder.total)}</strong></div><small className='order-date'>{completedOrder.createdAt}</small><button className='secondary wide' onClick={() => setTracking(false)}>{t('backHome')}</button></div></div>}
+      {tracking && completedOrder && <div className='modal-layer'><div className='tracking-card'><button className='modal-close' onClick={() => setTracking(false)}>×</button><div className='success-icon'>✓</div><p className='eyebrow'>ORDER #{completedOrder.id}</p><h2>{completedOrder.status === '完了' ? t('orderComplete') : t('trackingTitle')}</h2><p>{t('thanks')}</p><div className='order-progress'>{(completedOrder.method === 'delivery' ? ['受付','調理中','配達中','完了'] : ['受付','調理中','受取待ち','完了']).map((status, index, steps) => { const current = Math.max(0, steps.indexOf(completedOrder.status)); return <div className={index <= current ? 'active' : ''} key={status}><span>{index < current ? '✓' : index + 1}</span><b>{status === '受付' ? t('accepted') : status === '調理中' ? t('cooking') : status === '配達中' ? t('delivering') : status === '受取待ち' ? t('readyPickup') : t('completed')}</b></div>; })}</div><div className='eta'><small>{completedOrder.method === 'delivery' ? 'DELIVERY TIME' : 'PICKUP TIME'}</small><strong>{completedOrder.receiveTime}</strong></div><div className='complete-items'>{completedOrder.items.map((item,index) => <p key={item.id + '-' + index}><span>{foodNameOf(item, language)} × {item.quantity}</span><b>{yen(item.unitPrice * item.quantity)}</b></p>)}</div><div className='complete-total'><span>{t('total')}</span><strong>{yen(completedOrder.total)}</strong></div><small className='order-date'>{completedOrder.createdAt}</small><button className='secondary wide' onClick={() => setTracking(false)}>{t('backHome')}</button></div></div>}
 
-      {showFilter && <div className='modal-layer' onMouseDown={(event) => event.currentTarget === event.target && setShowFilter(false)}><div className='simple-panel filter-panel'><button className='modal-close' onClick={() => setShowFilter(false)}>×</button><p className='eyebrow'>MENU FILTER</p><h2>{t('filterTitle')}</h2><label><span>{t('priceRange')}</span><select value={filterPrice} onChange={(event) => setFilterPrice(event.target.value as FilterPrice)}><option value='all'>{l('指定なし','All prices','အားလုံး')}</option><option value='under800'>{l('¥800未満','Under ¥800','¥800 အောက်')}</option><option value='800to999'>¥800–¥999</option><option value='1000plus'>{l('¥1,000以上','¥1,000 and up','¥1,000 နှင့်အထက်')}</option></select></label><label><span>{t('spicyLevel')}</span><select value={filterSpice} onChange={(event) => setFilterSpice(event.target.value as FilterSpice)}><option value='all'>{l('指定なし','All levels','အားလုံး')}</option>{spiceOptions.map((spice) => <option key={spice.id} value={spice.id}>{spice.label}</option>)}</select></label><label><span>{t('excludedAllergy')}</span><select value={filterAllergy} onChange={(event) => setFilterAllergy(event.target.value)}><option value='all'>{l('指定なし','None','မသတ်မှတ်ပါ')}</option>{['卵','乳','小麦','落花生','えび','魚'].map((allergy) => <option key={allergy} value={allergy}>{language === 'en' ? ({卵:'Egg',乳:'Milk',小麦:'Wheat',落花生:'Peanut',えび:'Shrimp',魚:'Fish'} as Record<string,string>)[allergy] : allergy}</option>)}</select></label><div className='panel-actions'><button className='secondary' onClick={() => { setFilterPrice('all'); setFilterSpice('all'); setFilterAllergy('all'); }}>{t('reset')}</button><button className='primary' onClick={() => setShowFilter(false)}>{filteredFoods.length}{t('found')} · {t('showResults')}</button></div></div></div>}
+      {showFilter && <div className='modal-layer' onMouseDown={(event) => event.currentTarget === event.target && setShowFilter(false)}><div className='simple-panel filter-panel'><button className='modal-close' onClick={() => setShowFilter(false)}>×</button><p className='eyebrow'>MENU FILTER</p><h2>{t('filterTitle')}</h2><label><span>{t('priceRange')}</span><select value={filterPrice} onChange={(event) => setFilterPrice(event.target.value as FilterPrice)}><option value='all'>{l('指定なし','All prices','အားလုံး')}</option><option value='under800'>{l('¥800未満','Under ¥800','¥800 အောက်')}</option><option value='800to999'>¥800–¥999</option><option value='1000plus'>{l('¥1,000以上','¥1,000 and up','¥1,000 နှင့်အထက်')}</option></select></label><label><span>{t('spicyLevel')}</span><select value={filterSpice} onChange={(event) => setFilterSpice(event.target.value as FilterSpice)}><option value='all'>{l('指定なし','All levels','အားလုံး')}</option>{spiceOptions.map((spice) => <option key={spice.id} value={spice.id}>{choiceLabelOf(spice, language)}</option>)}</select></label><label><span>{t('excludedAllergy')}</span><select value={filterAllergy} onChange={(event) => setFilterAllergy(event.target.value)}><option value='all'>{l('指定なし','None','မသတ်မှတ်ပါ')}</option>{['卵','乳','小麦','落花生','えび','魚'].map((allergy) => <option key={allergy} value={allergy}>{language === 'en' ? ({卵:'Egg',乳:'Milk',小麦:'Wheat',落花生:'Peanut',えび:'Shrimp',魚:'Fish'} as Record<string,string>)[allergy] : allergy}</option>)}</select></label><div className='panel-actions'><button className='secondary' onClick={() => { setFilterPrice('all'); setFilterSpice('all'); setFilterAllergy('all'); }}>{t('reset')}</button><button className='primary' onClick={() => setShowFilter(false)}>{filteredFoods.length}{t('found')} · {t('showResults')}</button></div></div></div>}
 
       {infoPanel && <div className='modal-layer' onMouseDown={(event) => event.currentTarget === event.target && setInfoPanel(null)}><div className='simple-panel info-panel'><button className='modal-close' onClick={() => setInfoPanel(null)}>×</button><p className='eyebrow'>HOME MYANMAR RESTAURANT · DEMO</p><h2>{infoPanel === 'location' ? t('locationTitle') : infoPanel === 'notifications' ? t('notificationTitle') : infoPanel === 'legal' ? t('legal') : infoPanel === 'privacy' ? t('privacy') : infoPanel === 'cancellation' ? t('cancellation') : t('storeInfo')}</h2>{infoPanel === 'location' && <><p>沖縄県 那覇市 泉崎 1-1（{t('demoDisplay')}）</p><p>{l('配達範囲：那覇市内・店舗から約5km以内','Delivery area: within Naha City and about 5 km from the restaurant','ပို့ဆောင်သည့်ဧရိယာ: နာဟာမြို့အတွင်း ဆိုင်မှ ၅ ကီလိုမီတာခန့်')}</p></>}{infoPanel === 'notifications' && <><p>{l('¥2,000以上のご注文は配送料無料です。','Delivery is free for orders of ¥2,000 or more.','¥2,000 နှင့်အထက်မှာယူမှုများအတွက် ပို့ခအခမဲ့ဖြစ်ပါသည်။')}</p><p>{l('現在、新しい店舗からのお知らせはありません。','There are no new restaurant notices.','ယခုအချိန်တွင် ဆိုင်မှ အသိပေးချက်အသစ် မရှိပါ။')}</p></>}{infoPanel === 'store' && <><p>{t('hours')} · {l('定休日：不定休','Closed: irregular holidays','ပိတ်ရက်: မသတ်မှတ်ထား')}</p><p>{l('最低注文金額：なし／配達料：¥300（商品合計¥2,000以上で無料）','No minimum order. Delivery is ¥300 and free from ¥2,000.','အနည်းဆုံးမှာယူငွေ: မရှိ / ပို့ခ ¥300 (ပစ္စည်းစုစုပေါင်း ¥2,000 နှင့်အထက် အခမဲ့)')}</p></>}{infoPanel === 'legal' && <p>{l('販売事業者・住所・連絡先・価格・配送料はデモ表示です。実店舗運用前に正式な事業者情報へ差し替えてください。','Seller, address, contact details, prices and delivery fees are demo information and must be replaced before real operation.','ရောင်းချသူ၊ လိပ်စာ၊ ဆက်သွယ်ရန်၊ ဈေးနှုန်းနှင့် ပို့ခများသည် စမ်းသပ်ဒေတာဖြစ်ပြီး အမှန်တကယ်အသုံးပြုမီ တရားဝင်အချက်အလက်များဖြင့် ပြောင်းလဲရပါမည်။')}</p>}{infoPanel === 'privacy' && <p>{l('入力情報は注文表示のため、この端末のブラウザー内にのみ保存されるデモ仕様です。','For this demo, entered information is stored only in this browser to display orders.','ထည့်သွင်းထားသောအချက်အလက်များကို စမ်းသပ်မှာယူမှုအတွက် ဤစက်၏ browser အတွင်းသာ သိမ်းဆည်းပါသည်။')}</p>}{infoPanel === 'cancellation' && <p>{l('調理開始前はキャンセル可能です。調理開始後は店舗へお電話ください（デモ表示）。','Orders may be cancelled before cooking starts. Please call after preparation begins (demo).','ချက်ပြုတ်မှုမစတင်မီ ပယ်ဖျက်နိုင်ပါသည်။ စတင်ပြီးနောက် ဆိုင်သို့ ဖုန်းဆက်ပါ (စမ်းသပ်ဒေတာ)။')}</p>}</div></div>}
 
-      {showRecommend && <div className='modal-layer'><div className='recommend-card'><button className='modal-close' onClick={() => setShowRecommend(false)}>×</button><p className='eyebrow'>TODAY&apos;S RECOMMENDATION</p><h2>{t('recommendTitle')}</h2><p>{t('recommendHelp')}</p><h3>{t('whatEat')}</h3><div className='recommend-choices'><button className={recommendType === 'curry' ? 'active' : ''} onClick={() => setRecommendType('curry')}>{t('riceCurry')}</button><button className={recommendType === 'noodle' ? 'active' : ''} onClick={() => setRecommendType('noodle')}>{t('noodles')}</button></div><h3>{t('likeSpicy')}</h3><div className='recommend-choices'><button className={recommendSpicy === true ? 'active' : ''} onClick={() => setRecommendSpicy(true)}>{t('yes')}</button><button className={recommendSpicy === false ? 'active' : ''} onClick={() => setRecommendSpicy(false)}>{t('no')}</button></div>{recommendation && <div className='recommend-result'><small>{t('yourRecommendation')}</small><strong>{recommendation.mm}</strong><h3>{recommendation.jp}</h3><p>{tasteOf(recommendation, language)} · {yen(recommendation.price)}</p><button className='primary wide' onClick={() => { setShowRecommend(false); openFood(recommendation); }}>{t('seeDish')}</button></div>}</div></div>}
+      {showRecommend && <div className='modal-layer'><div className='recommend-card'><button className='modal-close' onClick={() => setShowRecommend(false)}>×</button><p className='eyebrow'>TODAY&apos;S RECOMMENDATION</p><h2>{t('recommendTitle')}</h2><p>{t('recommendHelp')}</p><h3>{t('whatEat')}</h3><div className='recommend-choices'><button className={recommendType === 'curry' ? 'active' : ''} onClick={() => setRecommendType('curry')}>{t('riceCurry')}</button><button className={recommendType === 'noodle' ? 'active' : ''} onClick={() => setRecommendType('noodle')}>{t('noodles')}</button></div><h3>{t('likeSpicy')}</h3><div className='recommend-choices'><button className={recommendSpicy === true ? 'active' : ''} onClick={() => setRecommendSpicy(true)}>{t('yes')}</button><button className={recommendSpicy === false ? 'active' : ''} onClick={() => setRecommendSpicy(false)}>{t('no')}</button></div>{recommendation && <div className='recommend-result'><small>{t('yourRecommendation')}</small><strong>{secondaryFoodNameOf(recommendation, language)}</strong><h3>{foodNameOf(recommendation, language)}</h3><p>{tasteOf(recommendation, language)} · {yen(recommendation.price)}</p><button className='primary wide' onClick={() => { setShowRecommend(false); openFood(recommendation); }}>{t('seeDish')}</button></div>}</div></div>}
 
       {showHistory && <div className='modal-layer'><div className='history-card'><button className='modal-close' onClick={() => setShowHistory(false)}>×</button><p className='eyebrow'>ORDER HISTORY</p><h2>{t('orderHistory')}</h2>{orders.length ? <div className='history-list'>{orders.map((order) => <button key={order.id} onClick={() => { setCompletedOrder(order); setShowHistory(false); setTracking(true); }}><div><strong>#{order.id}</strong><small>{order.createdAt} · {order.method === 'delivery' ? t('delivery') : t('pickup')}</small></div><b>{yen(order.total)}</b><span>›</span></button>)}</div> : <div className='history-empty'><span>◴</span><p>{t('noHistory')}</p></div>}</div></div>}
 
